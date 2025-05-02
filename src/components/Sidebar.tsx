@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar as SidebarContainer, SidebarContent, SidebarHeader, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { DollarSign, Users, Package, Receipt, Chart } from 'lucide-react';
+import { DollarSign, Users, Package, Receipt, BarChart } from 'lucide-react';
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -10,7 +10,7 @@ export const Sidebar = () => {
   const menuItems = [
     {
       title: 'Dashboard',
-      icon: <Chart className="h-5 w-5" />,
+      icon: <BarChart className="h-5 w-5" />,
       path: '/',
     },
     {
