@@ -52,6 +52,7 @@ export const mockProducts: Product[] = [
     quantity: 500,
     unit: 'kg',
     pricePerUnit: 25,
+    category: 'Grains',
     date: new Date('2023-06-15'),
     farmerId: '1'
   },
@@ -61,6 +62,7 @@ export const mockProducts: Product[] = [
     quantity: 300,
     unit: 'kg',
     pricePerUnit: 35,
+    category: 'Grains',
     date: new Date('2023-06-20'),
     farmerId: '1'
   },
@@ -70,6 +72,7 @@ export const mockProducts: Product[] = [
     quantity: 200,
     unit: 'kg',
     pricePerUnit: 20,
+    category: 'Vegetables',
     date: new Date('2023-07-05'),
     farmerId: '2'
   },
@@ -79,6 +82,7 @@ export const mockProducts: Product[] = [
     quantity: 450,
     unit: 'kg',
     pricePerUnit: 15,
+    category: 'Vegetables',
     date: new Date('2023-07-10'),
     farmerId: '2'
   },
@@ -88,6 +92,7 @@ export const mockProducts: Product[] = [
     quantity: 150,
     unit: 'kg',
     pricePerUnit: 60,
+    category: 'Fruits',
     date: new Date('2023-07-15'),
     farmerId: '3'
   }
