@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar as SidebarContainer, SidebarContent, SidebarHeader, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { DollarSign, Users, Package, Receipt, BarChart } from 'lucide-react';
+import { DollarSign, Users, Package, Receipt, BarChart, LogIn } from 'lucide-react';
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -63,6 +63,27 @@ export const Sidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Farmer Access</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/farmer-login" 
+                    className={`flex items-center gap-3 ${
+                      location.pathname === '/farmer-login' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+                    }`}
+                  >
+                    <LogIn className="h-5 w-5" />
+                    <span>Farmer Login</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

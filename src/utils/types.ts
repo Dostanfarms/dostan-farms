@@ -10,6 +10,8 @@ export interface Farmer {
   dateJoined: Date;
   products: Product[];
   transactions: Transaction[];
+  email: string;
+  password: string; // Note: In a production app, you should never store plain passwords
 }
 
 export interface Product {

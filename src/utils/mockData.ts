@@ -1,4 +1,3 @@
-
 import { Farmer, Product, Transaction } from './types';
 
 export const mockFarmers: Farmer[] = [
@@ -12,7 +11,9 @@ export const mockFarmers: Farmer[] = [
     ifscCode: 'AGRI0001234',
     dateJoined: new Date('2023-01-15'),
     products: [],
-    transactions: []
+    transactions: [],
+    email: 'john@example.com',
+    password: 'password123' // In a real app, you would never store plain text passwords
   },
   {
     id: '2',
@@ -24,7 +25,9 @@ export const mockFarmers: Farmer[] = [
     ifscCode: 'RURAL002345',
     dateJoined: new Date('2023-03-22'),
     products: [],
-    transactions: []
+    transactions: [],
+    email: 'jane@example.com',
+    password: 'password123'
   },
   {
     id: '3',
@@ -36,7 +39,9 @@ export const mockFarmers: Farmer[] = [
     ifscCode: 'FCU00987',
     dateJoined: new Date('2023-05-10'),
     products: [],
-    transactions: []
+    transactions: [],
+    email: 'robert@example.com',
+    password: 'password123'
   }
 ];
 
