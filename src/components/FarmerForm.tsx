@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Farmer } from '@/utils/types';
 import { mockFarmers } from '@/utils/mockData';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface FarmerFormProps {
   onSubmit: (farmer: Farmer) => void;
@@ -16,6 +17,7 @@ interface FarmerFormProps {
 
 const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer }) => {
   const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -46,6 +48,10 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -128,15 +134,27 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password *</Label>
-              <Input 
-                id="password" 
-                name="password" 
-                type="password"
-                placeholder="Enter password" 
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative">
+                <Input 
+                  id="password" 
+                  name="password" 
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter password" 
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                </Button>
+              </div>
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="address">Address</Label>

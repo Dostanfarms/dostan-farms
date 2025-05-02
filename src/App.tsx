@@ -9,6 +9,8 @@ import Farmers from "./pages/Farmers";
 import FarmerDetails from "./pages/FarmerDetails";
 import FarmerLogin from "./pages/FarmerLogin";
 import FarmerDashboard from "./pages/FarmerDashboard";
+import Products from "./pages/Products";
+import Sales from "./pages/Sales";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/farmer/:id" element={<FarmerDetails />} />
           <Route path="/farmer-login" element={<FarmerLogin />} />
           <Route path="/farmer-dashboard/:id" element={<FarmerDashboard />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/sales" element={<Sales />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
