@@ -1,0 +1,132 @@
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import Sidebar from '@/components/Sidebar';
+import FarmerForm from '@/components/FarmerForm';
+import { mockFarmers } from '@/utils/mockData';
+import { Farmer } from '@/utils/types';
+import { Search, Plus, User } from 'lucide-react';
+
+const Farmers = () => {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [farmers, setFarmers] = useState<Farmer[]>(mockFarmers);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Filter farmers based on search
+  const filteredFarmers = farmers.filter(farmer => 
+    farmer.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    farmer.phone.includes(searchTerm)
+  );
+  
+  const handleAddFarmer = (newFarmer: Farmer) => {
+    setFarmers([...farmers, newFarmer]);
+    setIsDialogOpen(false);
+  };
+  
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <Sidebar />
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+            <h1 className="text-2xl font-bold">Farmers Management</h1>
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search farmers..."
+                  className="pl-8 w-full md:w-[250px]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-agri-primary hover:bg-agri-secondary">
+                    <Plus className="mr-2 h-4 w-4" /> Add Farmer
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <FarmerForm 
+                    onSubmit={handleAddFarmer} 
+                    onCancel={() => setIsDialogOpen(false)} 
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+          
+          {filteredFarmers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-lg">
+              <User className="h-12 w-12 text-muted-foreground mb-4" />
+              {searchTerm ? (
+                <>
+                  <h3 className="text-lg font-medium mb-1">No farmers found</h3>
+                  <p className="text-muted-foreground text-center">
+                    No farmers match your search criteria. Try with a different name or phone number.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-medium mb-1">No farmers added yet</h3>
+                  <p className="text-muted-foreground text-center">
+                    Get started by adding your first farmer using the "Add Farmer" button.
+                  </p>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredFarmers.map((farmer) => (
+                <Card key={farmer.id} className="overflow-hidden">
+                  <CardHeader className="bg-muted pb-2">
+                    <CardTitle className="text-lg flex justify-between items-start">
+                      <span>{farmer.name}</span>
+                      <span className="text-xs bg-agri-primary text-white px-2 py-1 rounded-full">
+                        ID: {farmer.id}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Phone:</span>
+                        <span>{farmer.phone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Bank:</span>
+                        <span className="truncate max-w-[200px]">{farmer.bankName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Account:</span>
+                        <span>{farmer.accountNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Products:</span>
+                        <span>{farmer.products.length}</span>
+                      </div>
+                      <Button 
+                        className="w-full bg-agri-primary hover:bg-agri-secondary mt-2" 
+                        onClick={() => navigate(`/farmer/${farmer.id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    </SidebarProvider>
+  );
+};
+
+export default Farmers;

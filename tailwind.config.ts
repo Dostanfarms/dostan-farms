@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for AgriPay
+				agri: {
+					primary: '#2E7D32',
+					secondary: '#558B2F',
+					accent: '#33691E',
+					light: '#C8E6C9',
+					muted: '#E8F5E9',
 				}
 			},
 			borderRadius: {
