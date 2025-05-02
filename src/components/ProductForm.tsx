@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from "@/components/ui/select";
 import { Product } from '@/utils/types';
 import { mockProducts } from '@/utils/mockData';
 
@@ -13,172 +12,156 @@ interface ProductFormProps {
   farmerId: string;
   onSubmit: (product: Product) => void;
   onCancel: () => void;
-  editProduct?: Product; // New prop for editing existing products
+  editProduct?: Product;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ farmerId, onSubmit, onCancel, editProduct }) => {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: '',
-    quantity: '',
-    unit: 'kg',
-    pricePerUnit: '',
-    category: '' // Added category field
-  });
+const ProductForm = ({ farmerId, onSubmit, onCancel, editProduct }: ProductFormProps) => {
+  const [name, setName] = useState(editProduct?.name || '');
+  const [quantity, setQuantity] = useState(editProduct?.quantity.toString() || '');
+  const [unit, setUnit] = useState(editProduct?.unit || 'kg');
+  const [pricePerUnit, setPricePerUnit] = useState(editProduct?.pricePerUnit.toString() || '');
+  const [category, setCategory] = useState(editProduct?.category || '');
+  const [availableProducts, setAvailableProducts] = useState<string[]>([]);
 
-  // Populate form when editing an existing product
   useEffect(() => {
-    if (editProduct) {
-      setFormData({
-        name: editProduct.name,
-        quantity: editProduct.quantity.toString(),
-        unit: editProduct.unit,
-        pricePerUnit: editProduct.pricePerUnit.toString(),
-        category: editProduct.category || ''
-      });
+    // Get unique product names from the Products page to populate dropdown
+    const uniqueProducts = [...new Set(mockProducts.map(product => product.name))];
+    setAvailableProducts(uniqueProducts);
+    
+    // If editing and name not in available products, add it
+    if (editProduct?.name && !uniqueProducts.includes(editProduct.name)) {
+      setAvailableProducts([...uniqueProducts, editProduct.name]);
     }
   }, [editProduct]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string) => (value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleNameChange = (selectedName: string) => {
+    setName(selectedName);
+    
+    // Find matching product to auto-fill other fields
+    const matchingProduct = mockProducts.find(p => p.name === selectedName);
+    if (matchingProduct) {
+      setCategory(matchingProduct.category);
+      setUnit(matchingProduct.unit);
+      setPricePerUnit(matchingProduct.pricePerUnit.toString());
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
-    if (!formData.name || !formData.quantity || !formData.pricePerUnit || !formData.category) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
+    if (!name || !quantity || !pricePerUnit) {
       return;
     }
-
-    const quantity = parseFloat(formData.quantity);
-    const pricePerUnit = parseFloat(formData.pricePerUnit);
-
-    if (isNaN(quantity) || isNaN(pricePerUnit) || quantity <= 0 || pricePerUnit <= 0) {
-      toast({
-        title: "Invalid values",
-        description: "Quantity and price must be valid positive numbers.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Create new product or update existing one
-    const updatedProduct: Product = {
-      id: editProduct ? editProduct.id : `${mockProducts.length + 1}`,
-      name: formData.name,
-      quantity: quantity,
-      unit: formData.unit,
-      pricePerUnit: pricePerUnit,
-      category: formData.category,
-      date: editProduct ? editProduct.date : new Date(),
-      farmerId: farmerId
+    
+    const product: Product = {
+      id: editProduct?.id || `prod_${Date.now()}`,
+      name,
+      quantity: parseFloat(quantity),
+      unit,
+      pricePerUnit: parseFloat(pricePerUnit),
+      category,
+      date: editProduct?.date || new Date(),
+      farmerId
     };
-
-    onSubmit(updatedProduct);
-    toast({
-      title: editProduct ? "Product updated" : "Product added",
-      description: editProduct ? "Product has been successfully updated." : "New product has been successfully added."
-    });
+    
+    onSubmit(product);
   };
 
-  const productCategories = [
-    "Vegetables", "Fruits", "Grains", "Dairy", "Poultry", "Meat", "Others"
-  ];
-
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>{editProduct ? "Edit Product" : "Add Product"}</CardTitle>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+    <Card>
+      <CardContent className="pt-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Product Name *</Label>
-            <Input 
-              id="name" 
-              name="name" 
-              placeholder="Enter product name" 
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
-            <Select value={formData.category} onValueChange={handleSelectChange("category")}>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Select category" />
+            <Label htmlFor="product-name">Product Name</Label>
+            <Select 
+              value={name} 
+              onValueChange={handleNameChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a product" />
               </SelectTrigger>
               <SelectContent>
-                {productCategories.map((category) => (
-                  <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
-                ))}
+                <SelectGroup>
+                  <SelectLabel>Products</SelectLabel>
+                  {availableProducts.map((productName) => (
+                    <SelectItem key={productName} value={productName}>
+                      {productName}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
           
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Input
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+            />
+          </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity *</Label>
+              <Label htmlFor="quantity">Quantity</Label>
               <Input 
-                id="quantity" 
-                name="quantity" 
-                type="number"
+                id="quantity"
+                type="number" 
                 min="0"
                 step="0.01"
-                placeholder="Enter quantity" 
-                value={formData.quantity}
-                onChange={handleChange}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
                 required
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
-              <Select value={formData.unit} onValueChange={handleSelectChange("unit")}>
-                <SelectTrigger id="unit">
+              <Select value={unit} onValueChange={setUnit}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="kg">Kilogram (kg)</SelectItem>
                   <SelectItem value="g">Gram (g)</SelectItem>
                   <SelectItem value="l">Liter (l)</SelectItem>
-                  <SelectItem value="units">Units</SelectItem>
+                  <SelectItem value="ml">Milliliter (ml)</SelectItem>
+                  <SelectItem value="pcs">Pieces (pcs)</SelectItem>
+                  <SelectItem value="box">Box</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+          
           <div className="space-y-2">
-            <Label htmlFor="pricePerUnit">Price Per Unit (₹) *</Label>
+            <Label htmlFor="price">Price per Unit (₹)</Label>
             <Input 
-              id="pricePerUnit" 
-              name="pricePerUnit" 
-              type="number"
+              id="price"
+              type="number" 
               min="0"
               step="0.01"
-              placeholder="Enter price per unit" 
-              value={formData.pricePerUnit}
-              onChange={handleChange}
+              value={pricePerUnit}
+              onChange={(e) => setPricePerUnit(e.target.value)}
               required
             />
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button type="submit" className="bg-agri-primary hover:bg-agri-secondary">{editProduct ? "Update Product" : "Add Product"}</Button>
-        </CardFooter>
-      </form>
+          
+          <div className="flex gap-2 justify-end pt-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" className="bg-agri-primary hover:bg-agri-secondary">
+              {editProduct ? 'Update' : 'Add'} Product
+            </Button>
+          </div>
+        </form>
+      </CardContent>
     </Card>
   );
 };

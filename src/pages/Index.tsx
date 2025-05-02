@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
 import { mockFarmers, mockProducts, mockTransactions } from '@/utils/mockData';
-import { Users, Package, Receipt, DollarSign } from 'lucide-react';
+import { Users, Package, Receipt, DollarSign, ShoppingCart } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Index = () => {
@@ -61,9 +60,10 @@ const Index = () => {
             <h1 className="text-2xl font-bold">Dashboard</h1>
             <Button 
               className="bg-agri-primary hover:bg-agri-secondary"
-              onClick={() => navigate('/farmers')}
+              onClick={() => navigate('/sales')}
             >
-              Manage Farmers
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Add Sale
             </Button>
           </div>
           
