@@ -21,7 +21,9 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
     address: '',
     accountNumber: '',
     bankName: '',
-    ifscCode: ''
+    ifscCode: '',
+    email: '',
+    password: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +35,7 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.name || !formData.phone || !formData.accountNumber || !formData.bankName) {
+    if (!formData.name || !formData.phone || !formData.accountNumber || !formData.bankName || !formData.email || !formData.password) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -53,7 +55,9 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
       ifscCode: formData.ifscCode,
       dateJoined: new Date(),
       products: [],
-      transactions: []
+      transactions: [],
+      email: formData.email,
+      password: formData.password
     };
 
     onSubmit(newFarmer);
@@ -89,6 +93,30 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
                 name="phone" 
                 placeholder="Enter phone number" 
                 value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input 
+                id="email" 
+                name="email" 
+                type="email"
+                placeholder="Enter email address" 
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input 
+                id="password" 
+                name="password" 
+                type="password"
+                placeholder="Enter password" 
+                value={formData.password}
                 onChange={handleChange}
                 required
               />
