@@ -20,6 +20,7 @@ export interface Product {
   quantity: number;
   unit: string;
   pricePerUnit: number;
+  category: string; // Added category field
   date: Date;
   farmerId: string;
 }

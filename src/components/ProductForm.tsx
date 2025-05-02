@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,31 +13,46 @@ interface ProductFormProps {
   farmerId: string;
   onSubmit: (product: Product) => void;
   onCancel: () => void;
+  editProduct?: Product; // New prop for editing existing products
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ farmerId, onSubmit, onCancel }) => {
+const ProductForm: React.FC<ProductFormProps> = ({ farmerId, onSubmit, onCancel, editProduct }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     quantity: '',
     unit: 'kg',
-    pricePerUnit: ''
+    pricePerUnit: '',
+    category: '' // Added category field
   });
+
+  // Populate form when editing an existing product
+  useEffect(() => {
+    if (editProduct) {
+      setFormData({
+        name: editProduct.name,
+        quantity: editProduct.quantity.toString(),
+        unit: editProduct.unit,
+        pricePerUnit: editProduct.pricePerUnit.toString(),
+        category: editProduct.category || ''
+      });
+    }
+  }, [editProduct]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, unit: value }));
+  const handleSelectChange = (name: string) => (value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.name || !formData.quantity || !formData.pricePerUnit) {
+    if (!formData.name || !formData.quantity || !formData.pricePerUnit || !formData.category) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -58,28 +73,33 @@ const ProductForm: React.FC<ProductFormProps> = ({ farmerId, onSubmit, onCancel 
       return;
     }
 
-    // Create new product
-    const newProduct: Product = {
-      id: `${mockProducts.length + 1}`,
+    // Create new product or update existing one
+    const updatedProduct: Product = {
+      id: editProduct ? editProduct.id : `${mockProducts.length + 1}`,
       name: formData.name,
       quantity: quantity,
       unit: formData.unit,
       pricePerUnit: pricePerUnit,
-      date: new Date(),
+      category: formData.category,
+      date: editProduct ? editProduct.date : new Date(),
       farmerId: farmerId
     };
 
-    onSubmit(newProduct);
+    onSubmit(updatedProduct);
     toast({
-      title: "Product added",
-      description: "New product has been successfully added."
+      title: editProduct ? "Product updated" : "Product added",
+      description: editProduct ? "Product has been successfully updated." : "New product has been successfully added."
     });
   };
+
+  const productCategories = [
+    "Vegetables", "Fruits", "Grains", "Dairy", "Poultry", "Meat", "Others"
+  ];
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Add Product</CardTitle>
+        <CardTitle>{editProduct ? "Edit Product" : "Add Product"}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -94,6 +114,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ farmerId, onSubmit, onCancel 
               required
             />
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="category">Category *</Label>
+            <Select value={formData.category} onValueChange={handleSelectChange("category")}>
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {productCategories.map((category) => (
+                  <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity *</Label>
@@ -111,7 +146,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ farmerId, onSubmit, onCancel 
             </div>
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
-              <Select value={formData.unit} onValueChange={handleSelectChange}>
+              <Select value={formData.unit} onValueChange={handleSelectChange("unit")}>
                 <SelectTrigger id="unit">
                   <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
@@ -141,7 +176,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ farmerId, onSubmit, onCancel 
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button type="submit" className="bg-agri-primary hover:bg-agri-secondary">Add Product</Button>
+          <Button type="submit" className="bg-agri-primary hover:bg-agri-secondary">{editProduct ? "Update Product" : "Add Product"}</Button>
         </CardFooter>
       </form>
     </Card>

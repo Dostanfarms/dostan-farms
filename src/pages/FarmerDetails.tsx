@@ -13,7 +13,7 @@ import TransactionHistory from '@/components/TransactionHistory';
 import SettlementModal from '@/components/SettlementModal';
 import { mockFarmers, getDailyEarnings, getMonthlyEarnings, getUnsettledAmount } from '@/utils/mockData';
 import { Farmer, Product, Transaction } from '@/utils/types';
-import { ArrowLeft, Plus, DollarSign } from 'lucide-react';
+import { ArrowLeft, Plus, DollarSign, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 
 const FarmerDetails = () => {
@@ -27,6 +27,7 @@ const FarmerDetails = () => {
   const [dailyEarnings, setDailyEarnings] = useState([]);
   const [monthlyEarnings, setMonthlyEarnings] = useState([]);
   const [unsettledAmount, setUnsettledAmount] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
 
   useEffect(() => {
     if (id) {
@@ -47,41 +48,69 @@ const FarmerDetails = () => {
     }
   }, [id, navigate, toast]);
   
-  const handleAddProduct = (product: Product) => {
+  const handleProductSubmit = (product: Product) => {
     if (!farmer) return;
     
-    // Add product to farmer
-    const updatedFarmer = { 
-      ...farmer, 
-      products: [...farmer.products, product] 
-    };
-    
-    // Create transaction for the product
-    const transaction: Transaction = {
-      id: `tr_${Date.now()}`,
-      amount: product.quantity * product.pricePerUnit,
-      date: new Date(),
-      type: 'credit',
-      description: `${product.name} delivery`,
-      farmerId: farmer.id,
-      settled: false
-    };
-    
-    updatedFarmer.transactions = [...farmer.transactions, transaction];
-    
-    // Update farmer state
-    setFarmer(updatedFarmer);
-    setIsProductDialogOpen(false);
-    
-    // Update earnings and unsettled amount
-    setDailyEarnings(getDailyEarnings(farmer.id));
-    setMonthlyEarnings(getMonthlyEarnings(farmer.id));
-    setUnsettledAmount(prev => prev + (product.quantity * product.pricePerUnit));
-    
-    toast({
-      title: "Product Added",
-      description: `Added ${product.quantity} ${product.unit} of ${product.name} for ₹${(product.quantity * product.pricePerUnit).toFixed(2)}`,
-    });
+    if (selectedProduct) {
+      // Update existing product
+      const updatedProducts = farmer.products.map(p => 
+        p.id === product.id ? product : p
+      );
+      
+      // Update farmer state with updated products
+      const updatedFarmer = { 
+        ...farmer, 
+        products: updatedProducts
+      };
+      
+      setFarmer(updatedFarmer);
+      setSelectedProduct(undefined);
+      setIsProductDialogOpen(false);
+      
+      toast({
+        title: "Product Updated",
+        description: `Updated ${product.name} successfully`,
+      });
+    } else {
+      // Add new product
+      // Add product to farmer
+      const updatedFarmer = { 
+        ...farmer, 
+        products: [...farmer.products, product] 
+      };
+      
+      // Create transaction for the product
+      const transaction: Transaction = {
+        id: `tr_${Date.now()}`,
+        amount: product.quantity * product.pricePerUnit,
+        date: new Date(),
+        type: 'credit',
+        description: `${product.name} delivery`,
+        farmerId: farmer.id,
+        settled: false
+      };
+      
+      updatedFarmer.transactions = [...farmer.transactions, transaction];
+      
+      // Update farmer state
+      setFarmer(updatedFarmer);
+      setIsProductDialogOpen(false);
+      
+      // Update earnings and unsettled amount
+      setDailyEarnings(getDailyEarnings(farmer.id));
+      setMonthlyEarnings(getMonthlyEarnings(farmer.id));
+      setUnsettledAmount(prev => prev + (product.quantity * product.pricePerUnit));
+      
+      toast({
+        title: "Product Added",
+        description: `Added ${product.quantity} ${product.unit} of ${product.name} for ₹${(product.quantity * product.pricePerUnit).toFixed(2)}`,
+      });
+    }
+  };
+  
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setIsProductDialogOpen(true);
   };
   
   const handleSettlePayment = () => {
@@ -153,7 +182,10 @@ const FarmerDetails = () => {
                     <Button 
                       variant="outline" 
                       className="border-agri-primary text-agri-primary hover:bg-agri-muted"
-                      onClick={() => setIsProductDialogOpen(true)}
+                      onClick={() => {
+                        setSelectedProduct(undefined);
+                        setIsProductDialogOpen(true);
+                      }}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Product
@@ -261,21 +293,33 @@ const FarmerDetails = () => {
                           <thead>
                             <tr className="border-b">
                               <th className="text-left p-2">Product</th>
+                              <th className="text-left p-2">Category</th>
                               <th className="text-left p-2">Date</th>
                               <th className="text-right p-2">Quantity</th>
                               <th className="text-right p-2">Unit Price (₹)</th>
                               <th className="text-right p-2">Total (₹)</th>
+                              <th className="text-center p-2">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
                             {farmer.products.map((product) => (
                               <tr key={product.id} className="border-b">
                                 <td className="p-2">{product.name}</td>
+                                <td className="p-2">{product.category || 'N/A'}</td>
                                 <td className="p-2">{format(product.date, 'MMM dd, yyyy')}</td>
                                 <td className="text-right p-2">{product.quantity} {product.unit}</td>
                                 <td className="text-right p-2">₹{product.pricePerUnit.toFixed(2)}</td>
                                 <td className="text-right p-2 font-medium">
                                   ₹{(product.quantity * product.pricePerUnit).toFixed(2)}
+                                </td>
+                                <td className="text-center p-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleEditProduct(product)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
                                 </td>
                               </tr>
                             ))}
@@ -362,12 +406,19 @@ const FarmerDetails = () => {
             monthlyEarnings={monthlyEarnings} 
           />
           
-          <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+          <Dialog open={isProductDialogOpen} onOpenChange={(open) => {
+            setIsProductDialogOpen(open);
+            if (!open) setSelectedProduct(undefined);
+          }}>
             <DialogContent>
               <ProductForm 
                 farmerId={farmer.id} 
-                onSubmit={handleAddProduct} 
-                onCancel={() => setIsProductDialogOpen(false)} 
+                onSubmit={handleProductSubmit} 
+                onCancel={() => {
+                  setIsProductDialogOpen(false);
+                  setSelectedProduct(undefined);
+                }}
+                editProduct={selectedProduct}
               />
             </DialogContent>
           </Dialog>

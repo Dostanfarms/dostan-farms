@@ -10,13 +10,14 @@ import Sidebar from '@/components/Sidebar';
 import FarmerForm from '@/components/FarmerForm';
 import { mockFarmers } from '@/utils/mockData';
 import { Farmer } from '@/utils/types';
-import { Search, Plus, User } from 'lucide-react';
+import { Search, Plus, User, Edit, Eye } from 'lucide-react';
 
 const Farmers = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [farmers, setFarmers] = useState<Farmer[]>(mockFarmers);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | undefined>(undefined);
   
   // Filter farmers based on search
   const filteredFarmers = farmers.filter(farmer => 
@@ -25,8 +26,23 @@ const Farmers = () => {
   );
   
   const handleAddFarmer = (newFarmer: Farmer) => {
-    setFarmers([...farmers, newFarmer]);
+    if (selectedFarmer) {
+      // Update existing farmer
+      const updatedFarmers = farmers.map(farmer => 
+        farmer.id === newFarmer.id ? newFarmer : farmer
+      );
+      setFarmers(updatedFarmers);
+    } else {
+      // Add new farmer
+      setFarmers([...farmers, newFarmer]);
+    }
     setIsDialogOpen(false);
+    setSelectedFarmer(undefined);
+  };
+
+  const handleEditFarmer = (farmer: Farmer) => {
+    setSelectedFarmer(farmer);
+    setIsDialogOpen(true);
   };
   
   return (
@@ -46,7 +62,10 @@ const Farmers = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) setSelectedFarmer(undefined);
+              }}>
                 <DialogTrigger asChild>
                   <Button className="bg-agri-primary hover:bg-agri-secondary">
                     <Plus className="mr-2 h-4 w-4" /> Add Farmer
@@ -55,7 +74,11 @@ const Farmers = () => {
                 <DialogContent className="sm:max-w-[600px]">
                   <FarmerForm 
                     onSubmit={handleAddFarmer} 
-                    onCancel={() => setIsDialogOpen(false)} 
+                    onCancel={() => {
+                      setIsDialogOpen(false);
+                      setSelectedFarmer(undefined);
+                    }}
+                    editFarmer={selectedFarmer}
                   />
                 </DialogContent>
               </Dialog>
@@ -111,12 +134,21 @@ const Farmers = () => {
                         <span className="text-sm text-muted-foreground">Products:</span>
                         <span>{farmer.products.length}</span>
                       </div>
-                      <Button 
-                        className="w-full bg-agri-primary hover:bg-agri-secondary mt-2" 
-                        onClick={() => navigate(`/farmer/${farmer.id}`)}
-                      >
-                        View Details
-                      </Button>
+                      <div className="flex gap-2 mt-2">
+                        <Button 
+                          className="flex-1 bg-agri-primary hover:bg-agri-secondary" 
+                          onClick={() => navigate(`/farmer/${farmer.id}`)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" /> View
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => handleEditFarmer(farmer)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" /> Edit
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

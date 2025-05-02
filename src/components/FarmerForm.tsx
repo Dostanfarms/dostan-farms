@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +11,10 @@ import { mockFarmers } from '@/utils/mockData';
 interface FarmerFormProps {
   onSubmit: (farmer: Farmer) => void;
   onCancel: () => void;
+  editFarmer?: Farmer; // New prop to support editing
 }
 
-const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
+const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -25,6 +26,22 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
     email: '',
     password: ''
   });
+
+  // Populate form when editing an existing farmer
+  useEffect(() => {
+    if (editFarmer) {
+      setFormData({
+        name: editFarmer.name,
+        phone: editFarmer.phone,
+        address: editFarmer.address || '',
+        accountNumber: editFarmer.accountNumber,
+        bankName: editFarmer.bankName,
+        ifscCode: editFarmer.ifscCode || '',
+        email: editFarmer.email,
+        password: editFarmer.password
+      });
+    }
+  }, [editFarmer]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -44,33 +61,33 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
       return;
     }
 
-    // Create new farmer
-    const newFarmer: Farmer = {
-      id: `${mockFarmers.length + 1}`,
+    // Create new farmer or update existing one
+    const updatedFarmer: Farmer = {
+      id: editFarmer ? editFarmer.id : `${mockFarmers.length + 1}`,
       name: formData.name,
       phone: formData.phone,
       address: formData.address,
       accountNumber: formData.accountNumber,
       bankName: formData.bankName,
       ifscCode: formData.ifscCode,
-      dateJoined: new Date(),
-      products: [],
-      transactions: [],
+      dateJoined: editFarmer ? editFarmer.dateJoined : new Date(),
+      products: editFarmer ? editFarmer.products : [],
+      transactions: editFarmer ? editFarmer.transactions : [],
       email: formData.email,
       password: formData.password
     };
 
-    onSubmit(newFarmer);
+    onSubmit(updatedFarmer);
     toast({
-      title: "Farmer created",
-      description: "New farmer has been successfully added."
+      title: editFarmer ? "Farmer updated" : "Farmer created",
+      description: editFarmer ? "Farmer has been successfully updated." : "New farmer has been successfully added."
     });
   };
 
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Add New Farmer</CardTitle>
+        <CardTitle>{editFarmer ? "Edit Farmer" : "Add New Farmer"}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -167,7 +184,7 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel }) => {
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button type="submit" className="bg-agri-primary hover:bg-agri-secondary">Save Farmer</Button>
+          <Button type="submit" className="bg-agri-primary hover:bg-agri-secondary">{editFarmer ? "Update Farmer" : "Save Farmer"}</Button>
         </CardFooter>
       </form>
     </Card>
