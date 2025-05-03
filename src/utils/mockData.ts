@@ -13,7 +13,11 @@ export const mockFarmers: Farmer[] = [
     products: [],
     transactions: [],
     email: 'john@example.com',
-    password: 'password123' // In a real app, you would never store plain text passwords
+    password: 'password123', // In a real app, you would never store plain text passwords
+    state: 'Karnataka',
+    district: 'Bangalore',
+    village: 'Whitefield',
+    profilePhoto: undefined
   },
   {
     id: '2',
@@ -27,7 +31,11 @@ export const mockFarmers: Farmer[] = [
     products: [],
     transactions: [],
     email: 'jane@example.com',
-    password: 'password123'
+    password: 'password123',
+    state: 'Maharashtra',
+    district: 'Pune',
+    village: 'Hinjewadi',
+    profilePhoto: undefined
   },
   {
     id: '3',
@@ -41,7 +49,11 @@ export const mockFarmers: Farmer[] = [
     products: [],
     transactions: [],
     email: 'robert@example.com',
-    password: 'password123'
+    password: 'password123',
+    state: 'Tamil Nadu',
+    district: 'Chennai',
+    village: 'Adyar',
+    profilePhoto: undefined
   }
 ];
 
