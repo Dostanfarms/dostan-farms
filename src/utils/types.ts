@@ -24,7 +24,7 @@ export interface Product {
   quantity: number;
   unit: string;
   pricePerUnit: number;
-  category: string; // Added category field
+  category: string;
   date: Date;
   farmerId: string;
 }
@@ -62,4 +62,28 @@ export interface Customer {
   name: string;
   mobile: string;
   email?: string;
+}
+
+// New role-based access control types
+export type Role = 'admin' | 'manager' | 'sales' | 'accountant';
+
+export interface Permission {
+  resource: string;
+  actions: ('view' | 'create' | 'edit' | 'delete')[];
+}
+
+export interface RolePermission {
+  role: Role;
+  permissions: Permission[];
+}
+
+export interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: Role;
+  profilePhoto?: string;
+  dateJoined: Date;
 }
