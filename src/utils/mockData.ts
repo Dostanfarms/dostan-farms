@@ -191,7 +191,41 @@ mockFarmers.forEach(farmer => {
   farmer.transactions = mockTransactions.filter(transaction => transaction.farmerId === farmer.id);
 });
 
-// Function to get daily earnings for a farmer
+// Extended location data for all India states
+export const STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", 
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", 
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", 
+  "Uttarakhand", "West Bengal"
+];
+
+export const DISTRICTS: Record<string, string[]> = {
+  "Andhra Pradesh": ["Anantapur", "Chittoor", "East Godavari", "Guntur", "Krishna", "Kurnool", "Prakasam", "Srikakulam", "Visakhapatnam", "Vizianagaram", "West Godavari", "YSR Kadapa"],
+  "Karnataka": ["Bagalkot", "Ballari", "Belagavi", "Bengaluru Rural", "Bengaluru Urban", "Bidar", "Chamarajanagar", "Chikballapur", "Chikkamagaluru", "Chitradurga", "Dakshina Kannada", "Davangere", "Dharwad", "Gadag", "Hassan", "Haveri", "Kalaburagi", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysuru", "Raichur", "Ramanagara", "Shivamogga", "Tumakuru", "Udupi", "Uttara Kannada", "Vijayapura", "Yadgir"],
+  "Maharashtra": ["Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nandurbar", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal"],
+  "Tamil Nadu": ["Ariyalur", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Salem", "Sivaganga", "Thanjavur", "Theni", "Thoothukudi", "Tiruchirappalli", "Tirunelveli", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"]
+};
+
+export const VILLAGES: Record<string, Record<string, string[]>> = {
+  "Karnataka": {
+    "Bengaluru Urban": ["Whitefield", "Electronic City", "Yelahanka", "Kengeri", "Hebbal", "Marathahalli", "HSR Layout"],
+    "Mysuru": ["Chamundi Hills", "Srirangapatna", "T Narasipura", "Nanjangud", "Hunsur"],
+    "Ballari": ["Sandur", "Hospet", "Kampli", "Kudligi", "Hadagalli"]
+  },
+  "Maharashtra": {
+    "Pune": ["Hinjewadi", "Wagholi", "Kharadi", "Baner", "Magarpatta", "Hadapsar", "Kothrud"],
+    "Mumbai Suburban": ["Andheri", "Borivali", "Bandra", "Malad", "Goregaon", "Kandivali", "Kurla"],
+    "Nagpur": ["Dharampeth", "Sadar", "Civil Lines", "Nandanvan", "Mankapur"]
+  },
+  "Tamil Nadu": {
+    "Chennai": ["Adyar", "Anna Nagar", "T. Nagar", "Velachery", "Mylapore", "Porur", "Besant Nagar"],
+    "Coimbatore": ["Peelamedu", "RS Puram", "Saibaba Colony", "Ganapathy", "Singanallur"],
+    "Madurai": ["Arapalayam", "Goripalayam", "Mattuthavani", "Tirupparankundram", "Villapuram"]
+  }
+};
+
+// Helper functions
 export const getDailyEarnings = (farmerId: string) => {
   const transactions = mockTransactions.filter(t => t.farmerId === farmerId && t.type === 'credit');
   const dailyMap = new Map();
@@ -208,7 +242,6 @@ export const getDailyEarnings = (farmerId: string) => {
   })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-// Function to get monthly earnings for a farmer
 export const getMonthlyEarnings = (farmerId: string) => {
   const transactions = mockTransactions.filter(t => t.farmerId === farmerId && t.type === 'credit');
   const monthlyMap = new Map();
@@ -226,7 +259,6 @@ export const getMonthlyEarnings = (farmerId: string) => {
   })).sort((a, b) => a.month.localeCompare(b.month));
 };
 
-// Function to calculate unsettled amount for a farmer
 export const getUnsettledAmount = (farmerId: string) => {
   const transactions = mockTransactions.filter(t => t.farmerId === farmerId);
   let balance = 0;
@@ -241,3 +273,19 @@ export const getUnsettledAmount = (farmerId: string) => {
   
   return balance;
 };
+
+// Shopping cart type for sales
+export interface CartItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  pricePerUnit: number;
+  unit: string;
+  category: string;
+}
+
+export interface Customer {
+  name: string;
+  mobile: string;
+  email?: string;
+}

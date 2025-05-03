@@ -1,3 +1,4 @@
+
 export interface Farmer {
   id: string;
   name: string;
@@ -46,4 +47,19 @@ export interface DailyEarning {
 export interface MonthlyEarning {
   month: string;
   amount: number;
+}
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  pricePerUnit: number;
+  unit: string;
+  category: string;
+}
+
+export interface Customer {
+  name: string;
+  mobile: string;
+  email?: string;
 }
