@@ -1,17 +1,42 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sidebar as SidebarContainer, SidebarContent, SidebarHeader, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { DollarSign, Users, Package, Receipt, BarChart, LogIn, ShoppingCart, UserCog, LogOut } from 'lucide-react';
+import { 
+  Sidebar as SidebarContainer, 
+  SidebarContent, 
+  SidebarHeader, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton 
+} from '@/components/ui/sidebar';
+import { 
+  DollarSign, 
+  Users, 
+  Package, 
+  Receipt, 
+  BarChart, 
+  LogIn, 
+  ShoppingCart, 
+  UserCog, 
+  LogOut,
+  ChevronDown,
+  ChevronUp,
+  Settings
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessibleResources } from '@/utils/employeeData';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export const Sidebar = () => {
   const location = useLocation();
   const { currentUser, logout } = useAuth();
+  const [manageOpen, setManageOpen] = useState(false);
 
-  // Base menu items
-  const menuItems = [
+  // Dashboard is kept at the top level
+  const topLevelItems = [
     {
       title: 'Dashboard',
       icon: <BarChart className="h-5 w-5" />,
@@ -25,6 +50,22 @@ export const Sidebar = () => {
       resource: 'farmers'
     },
     {
+      title: 'Transactions',
+      icon: <Receipt className="h-5 w-5" />,
+      path: '/transactions',
+      resource: 'transactions'
+    },
+    {
+      title: 'Settlements',
+      icon: <DollarSign className="h-5 w-5" />,
+      path: '/settlements',
+      resource: 'settlements'
+    }
+  ];
+
+  // Items moved to the "Manage" section
+  const manageItems = [
+    {
       title: 'Products',
       icon: <Package className="h-5 w-5" />,
       path: '/products',
@@ -37,30 +78,27 @@ export const Sidebar = () => {
       resource: 'sales'
     },
     {
-      title: 'Transactions',
-      icon: <Receipt className="h-5 w-5" />,
-      path: '/transactions',
-      resource: 'transactions'
-    },
-    {
-      title: 'Settlements',
-      icon: <DollarSign className="h-5 w-5" />,
-      path: '/settlements',
-      resource: 'settlements'
-    },
-    {
       title: 'Employees',
       icon: <UserCog className="h-5 w-5" />,
       path: '/employees',
       resource: 'employees'
+    },
+    {
+      title: 'Roles',
+      icon: <Settings className="h-5 w-5" />,
+      path: '/roles',
+      resource: 'roles'
     }
   ];
 
   // Filter menu items based on user permissions
   const accessibleResources = currentUser ? getAccessibleResources(currentUser.role) : [];
-  const filteredMenuItems = currentUser 
-    ? menuItems.filter(item => accessibleResources.includes(item.resource))
-    : menuItems;
+  const filteredTopLevelItems = currentUser 
+    ? topLevelItems.filter(item => accessibleResources.includes(item.resource))
+    : topLevelItems;
+  const filteredManageItems = currentUser 
+    ? manageItems.filter(item => accessibleResources.includes(item.resource))
+    : manageItems;
 
   return (
     <SidebarContainer>
@@ -75,7 +113,7 @@ export const Sidebar = () => {
           <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredMenuItems.map((item) => (
+              {filteredTopLevelItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton asChild>
                     <Link 
@@ -90,6 +128,36 @@ export const Sidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {filteredManageItems.length > 0 && (
+                <SidebarMenuItem>
+                  <Collapsible open={manageOpen} onOpenChange={setManageOpen} className="w-full">
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-3">
+                          <Settings className="h-5 w-5" />
+                          <span>Manage</span>
+                        </div>
+                        {manageOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-9 pt-2 space-y-1">
+                      {filteredManageItems.map((item) => (
+                        <Link 
+                          key={item.path}
+                          to={item.path} 
+                          className={`flex items-center gap-3 py-2 px-3 rounded-md ${
+                            location.pathname === item.path ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-muted'
+                          }`}
+                        >
+                          {item.icon}
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -14,6 +14,7 @@ import FarmerDashboard from "./pages/FarmerDashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
 import Employees from "./pages/Employees";
+import Roles from "./pages/Roles";
 import EmployeeLogin from "./pages/EmployeeLogin";
 import EmployeeRegister from "./pages/EmployeeRegister";
 import Transactions from "./pages/Transactions";
@@ -57,9 +58,17 @@ const App = () => (
             <Route element={<ProtectedRoute resource="transactions" action="view" />}>
               <Route path="/transactions" element={<Transactions />} />
             </Route>
+
+            <Route element={<ProtectedRoute resource="settlements" action="view" />}>
+              <Route path="/settlements" element={<Transactions />} />
+            </Route>
             
             <Route element={<ProtectedRoute resource="employees" action="view" />}>
               <Route path="/employees" element={<Employees />} />
+            </Route>
+
+            <Route element={<ProtectedRoute resource="roles" action="view" />}>
+              <Route path="/roles" element={<Roles />} />
             </Route>
             
             {/* Farmer dashboard - separate auth system */}

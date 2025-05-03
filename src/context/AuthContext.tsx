@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Employee, Role } from '../utils/types';
-import { mockEmployees, hasPermission } from '../utils/employeeData';
+import { mockEmployees, rolePermissions } from '../utils/employeeData';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -98,7 +98,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkPermission = (resource: string, action: 'view' | 'create' | 'edit' | 'delete'): boolean => {
     if (!currentUser) return false;
-    return hasPermission(currentUser.role, resource, action);
+    
+    // Check if there are custom permissions stored in localStorage
+    const storedPermissions = localStorage.getItem('rolePermissions');
+    const permissionsToUse = storedPermissions ? JSON.parse(storedPermissions) : rolePermissions;
+    
+    const rolePermission = permissionsToUse.find((rp: any) => rp.role === currentUser.role);
+    if (!rolePermission) return false;
+    
+    const resourcePermission = rolePermission.permissions.find((p: any) => p.resource === resource);
+    if (!resourcePermission) return false;
+    
+    return resourcePermission.actions.includes(action);
   };
 
   const value = {
