@@ -15,6 +15,7 @@ import Products from "./pages/Products";
 import Sales from "./pages/Sales";
 import Employees from "./pages/Employees";
 import EmployeeLogin from "./pages/EmployeeLogin";
+import EmployeeRegister from "./pages/EmployeeRegister";
 import Transactions from "./pages/Transactions";
 import AccessDenied from "./pages/AccessDenied";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/farmer-login" element={<FarmerLogin />} />
             <Route path="/employee-login" element={<EmployeeLogin />} />
+            <Route path="/employee-register" element={<EmployeeRegister />} />
             <Route path="/access-denied" element={<AccessDenied />} />
             
             {/* Protected routes */}

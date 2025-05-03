@@ -25,7 +25,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        const employee = mockEmployees.find(e => e.id === parsedUser.id);
+        // First check registered employees (new functionality)
+        const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
+        const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
+        
+        // Look for the user in registered employees first, then in mock employees
+        let employee = registeredEmployees.find((e: Employee) => e.id === parsedUser.id);
+        
+        if (!employee) {
+          employee = mockEmployees.find(e => e.id === parsedUser.id);
+        }
+        
         if (employee) {
           setCurrentUser(employee);
         }
@@ -40,7 +50,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    const employee = mockEmployees.find(e => e.email === email && e.password === password);
+    // First check registered employees
+    const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
+    const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
+    
+    // Look in registered employees first
+    let employee = registeredEmployees.find(
+      (e: Employee) => e.email === email && e.password === password
+    );
+    
+    // If not found, check mock employees
+    if (!employee) {
+      employee = mockEmployees.find(e => e.email === email && e.password === password);
+    }
     
     if (employee) {
       setCurrentUser(employee);
