@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { mockEmployees } from '@/utils/employeeData';
-import { Employee } from '@/utils/types';
+import { Employee, Role } from '@/utils/types';
 import { useToast } from '@/components/ui/use-toast';
 import Sidebar from '@/components/Sidebar';
 import { UserPlus, Pencil, Trash2, User } from 'lucide-react';
@@ -31,12 +30,19 @@ const Employees = () => {
   const { toast } = useToast();
   const { checkPermission } = useAuth();
   
-  const [formData, setFormData] = useState({
+  // Update the type of formData to include the Role type
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    role: Role;
+  }>({
     name: '',
     email: '',
     phone: '',
     password: '',
-    role: 'sales' as const
+    role: 'sales'
   });
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +56,7 @@ const Employees = () => {
   const handleRoleChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      role: value as 'admin' | 'manager' | 'sales' | 'accountant'
+      role: value as Role
     }));
   };
   
