@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { mockFarmers } from '@/utils/mockData';
 
 const FarmerLogin = () => {
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +28,7 @@ const FarmerLogin = () => {
     // Simulate API call with timeout
     setTimeout(() => {
       const farmer = mockFarmers.find(
-        (farmer) => farmer.email === email && farmer.password === password
+        (farmer) => farmer.phone === phone && farmer.password === password
       );
       
       if (farmer) {
@@ -48,7 +48,7 @@ const FarmerLogin = () => {
       } else {
         toast({
           title: "Login failed",
-          description: "Invalid email or password. Please try again.",
+          description: "Invalid phone number or password. Please try again.",
           variant: "destructive"
         });
       }
@@ -70,13 +70,13 @@ const FarmerLogin = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="phone">Mobile Number</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="phone"
+                type="tel"
+                placeholder="Your mobile number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>

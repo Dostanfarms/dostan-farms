@@ -1,4 +1,3 @@
-
 export interface Farmer {
   id: string;
   name: string;
@@ -11,7 +10,11 @@ export interface Farmer {
   products: Product[];
   transactions: Transaction[];
   email: string;
-  password: string; // Note: In a production app, you should never store plain passwords
+  password: string;
+  profilePhoto?: string;
+  state: string;
+  district: string;
+  village: string;
 }
 
 export interface Product {
