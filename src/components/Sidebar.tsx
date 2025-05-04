@@ -24,7 +24,8 @@ import {
   LogOut,
   ChevronDown,
   ChevronUp,
-  Settings
+  Settings,
+  Tag
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessibleResources } from '@/utils/employeeData';
@@ -76,6 +77,12 @@ export const Sidebar = () => {
       icon: <DollarSign className="h-5 w-5" />,
       path: '/settlements',
       resource: 'settlements'
+    },
+    {
+      title: 'Coupons',
+      icon: <Tag className="h-5 w-5" />,
+      path: '/coupons',
+      resource: 'coupons'
     },
     {
       title: 'Employees',

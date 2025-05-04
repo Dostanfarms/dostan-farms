@@ -65,6 +65,15 @@ export interface Customer {
   email?: string;
 }
 
+// Coupon system types
+export interface Coupon {
+  code: string;
+  discountType: 'percentage' | 'flat';
+  discountValue: number;
+  maxDiscountLimit?: number;
+  expiryDate: Date;
+}
+
 // Role-based access control types
 export type Role = 'admin' | 'manager' | 'sales' | 'accountant';
 

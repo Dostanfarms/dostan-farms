@@ -8,12 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from '@/components/ui/label';
 import Sidebar from '@/components/Sidebar';
 import { mockProducts } from '@/utils/mockData';
-import { Product, CartItem, Customer } from '@/utils/types';
-import { Search, ShoppingCart, Package, Tag, Plus, Minus, Trash2, CreditCard } from 'lucide-react';
+import { Product, CartItem, Customer, Coupon } from '@/utils/types';
+import { Search, ShoppingCart, Package, Tag, Plus, Minus, Trash2, CreditCard, Check, Receipt } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import QRCode from 'react-qr-code';
 
 const Sales = () => {
   const { toast } = useToast();
@@ -22,10 +23,15 @@ const Sales = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
+  const [isPaymentSuccessDialogOpen, setIsPaymentSuccessDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantityToAdd, setQuantityToAdd] = useState(1);
   const [customer, setCustomer] = useState<Customer>({ name: '', mobile: '', email: '' });
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'razorpay'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
+  const [upiQrVisible, setUpiQrVisible] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState('');
   
   // Filter products based on search
   const filteredProducts = products.filter(product => 
@@ -85,10 +91,36 @@ const Sales = () => {
     setCart(updatedCart);
   };
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return cart.reduce((total, item) => {
       return total + (item.quantity * item.pricePerUnit);
     }, 0);
+  };
+
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    
+    const subtotal = calculateSubtotal();
+    let discount = 0;
+    
+    if (appliedCoupon.discountType === 'percentage') {
+      discount = subtotal * (appliedCoupon.discountValue / 100);
+      // Apply max discount limit if set and if calculated discount exceeds it
+      if (appliedCoupon.maxDiscountLimit && discount > appliedCoupon.maxDiscountLimit) {
+        discount = appliedCoupon.maxDiscountLimit;
+      }
+    } else {
+      // Flat discount
+      discount = appliedCoupon.discountValue;
+    }
+    
+    return discount;
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    return subtotal - discount;
   };
 
   const startCheckout = () => {
@@ -101,6 +133,63 @@ const Sales = () => {
       return;
     }
     setIsCheckoutDialogOpen(true);
+    // Reset coupon-related state
+    setCouponCode('');
+    setAppliedCoupon(null);
+    setCouponError('');
+  };
+
+  const validateCoupon = () => {
+    // In a real application, you would fetch coupons from your backend
+    // For now, we'll use a mock coupon for demonstration
+    setCouponError('');
+    
+    // Check if coupon code is empty
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    
+    // Mock API call to validate coupon
+    setTimeout(() => {
+      const mockCoupons: Coupon[] = [
+        { 
+          code: 'DISCOUNT10', 
+          discountType: 'percentage', 
+          discountValue: 10,
+          maxDiscountLimit: 1000,
+          expiryDate: new Date('2025-12-31')
+        },
+        {
+          code: 'FLAT500',
+          discountType: 'flat',
+          discountValue: 500,
+          expiryDate: new Date('2025-12-31')
+        }
+      ];
+      
+      const foundCoupon = mockCoupons.find(
+        c => c.code.toLowerCase() === couponCode.toLowerCase() && c.expiryDate > new Date()
+      );
+      
+      if (foundCoupon) {
+        setAppliedCoupon(foundCoupon);
+        toast({
+          title: "Coupon applied",
+          description: foundCoupon.discountType === 'percentage'
+            ? `${foundCoupon.discountValue}% discount applied`
+            : `₹${foundCoupon.discountValue} discount applied`
+        });
+      } else {
+        setAppliedCoupon(null);
+        setCouponError('Invalid or expired coupon code');
+      }
+    }, 500);
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
   };
 
   const processPayment = () => {
@@ -114,32 +203,47 @@ const Sales = () => {
       return;
     }
 
-    // Handle payment method
-    if (paymentMethod === 'razorpay') {
-      // In a real implementation, you would integrate with Razorpay API here
-      toast({
-        title: "Razorpay payment initiated",
-        description: "This is a placeholder for Razorpay integration",
-      });
-      
-      // Mock successful payment after 2 seconds
-      setTimeout(() => {
-        completeOrder();
-      }, 2000);
+    if (paymentMethod === 'online') {
+      setUpiQrVisible(true);
     } else {
       // Cash payment
       completeOrder();
     }
   };
 
+  const handlePaymentSuccess = () => {
+    setUpiQrVisible(false);
+    completeOrder();
+  };
+
   const completeOrder = () => {
-    toast({
-      title: "Order completed",
-      description: `Order for ${customer.name} has been processed successfully`,
-    });
+    setIsCheckoutDialogOpen(false);
+    setIsPaymentSuccessDialogOpen(true);
+  };
+
+  const resetSale = () => {
+    setIsPaymentSuccessDialogOpen(false);
     setCart([]);
     setCustomer({ name: '', mobile: '', email: '' });
-    setIsCheckoutDialogOpen(false);
+    setPaymentMethod('cash');
+  };
+
+  const formatDateTime = () => {
+    const now = new Date();
+    return now.toLocaleString('en-IN', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  // Generate UPI payment URI based on cart total
+  const generateUpiPaymentUri = () => {
+    const total = calculateTotal();
+    return `upi://pay?pa=2755c@ybl&pn=AgriPayStore&am=${total.toFixed(2)}&cu=INR&tn=Purchase at AgriPay Store`;
   };
 
   return (
@@ -398,6 +502,62 @@ const Sales = () => {
                 
                 <div className="border-t my-2"></div>
                 
+                {/* Coupon section */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="couponCode" className="text-right">
+                    Coupon
+                  </Label>
+                  <div className="col-span-3 flex gap-2">
+                    <Input
+                      id="couponCode"
+                      placeholder="Enter coupon code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      disabled={!!appliedCoupon}
+                      className="flex-1"
+                    />
+                    {!appliedCoupon ? (
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={validateCoupon}
+                      >
+                        Apply
+                      </Button>
+                    ) : (
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={removeCoupon}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                {couponError && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <div className="col-start-2 col-span-3">
+                      <p className="text-sm text-red-500">{couponError}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {appliedCoupon && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <div className="col-start-2 col-span-3">
+                      <p className="text-sm text-green-500">
+                        {appliedCoupon.discountType === 'percentage'
+                          ? `${appliedCoupon.discountValue}% off applied!`
+                          : `₹${appliedCoupon.discountValue} discount applied!`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="border-t my-2"></div>
+                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">
                     Payment
@@ -413,21 +573,35 @@ const Sales = () => {
                     </Button>
                     <Button
                       type="button"
-                      variant={paymentMethod === 'razorpay' ? 'default' : 'outline'}
-                      onClick={() => setPaymentMethod('razorpay')}
-                      className={paymentMethod === 'razorpay' ? 'bg-agri-primary hover:bg-agri-secondary' : ''}
+                      variant={paymentMethod === 'online' ? 'default' : 'outline'}
+                      onClick={() => setPaymentMethod('online')}
+                      className={paymentMethod === 'online' ? 'bg-agri-primary hover:bg-agri-secondary' : ''}
                     >
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Razorpay
+                      Online
                     </Button>
                   </div>
                 </div>
                 
                 <div className="border-t my-2"></div>
                 
-                <div className="flex justify-between font-medium text-lg">
-                  <span>Total Amount:</span>
-                  <span>₹{calculateTotal().toFixed(2)}</span>
+                {/* Summary section */}
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>₹{calculateSubtotal().toFixed(2)}</span>
+                  </div>
+                  
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-500">
+                      <span>Discount:</span>
+                      <span>- ₹{calculateDiscount().toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-medium text-lg pt-2 border-t">
+                    <span>Total Amount:</span>
+                    <span>₹{calculateTotal().toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
               
@@ -436,7 +610,127 @@ const Sales = () => {
                   Cancel
                 </Button>
                 <Button onClick={processPayment} className="bg-agri-primary hover:bg-agri-secondary">
-                  {paymentMethod === 'razorpay' ? 'Pay with Razorpay' : 'Complete Sale'}
+                  {paymentMethod === 'online' ? 'Generate Payment QR' : 'Complete Sale'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* UPI Payment QR Dialog */}
+          {upiQrVisible && (
+            <Dialog open={upiQrVisible} onOpenChange={setUpiQrVisible}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>UPI Payment</DialogTitle>
+                  <DialogDescription>
+                    Scan this QR code to pay ₹{calculateTotal().toFixed(2)}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="flex flex-col items-center justify-center py-6">
+                  <div className="bg-white p-4 rounded-md">
+                    <QRCode
+                      value={generateUpiPaymentUri()}
+                      size={200}
+                    />
+                  </div>
+                  <p className="mt-4 text-sm text-center text-muted-foreground">
+                    UPI ID: 2755c@ybl
+                  </p>
+                </div>
+                
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setUpiQrVisible(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handlePaymentSuccess} className="bg-green-600 hover:bg-green-700">
+                    <Check className="mr-2 h-4 w-4" /> Payment Complete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          
+          {/* Payment Success & Receipt Dialog */}
+          <Dialog open={isPaymentSuccessDialogOpen} onOpenChange={setIsPaymentSuccessDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center">
+                  <Receipt className="mr-2 h-5 w-5" /> 
+                  Payment Receipt
+                </DialogTitle>
+                <DialogDescription>
+                  Sale completed successfully!
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="border rounded-md p-4">
+                <div className="text-center mb-4">
+                  <h3 className="font-bold text-lg">AgriPay Store</h3>
+                  <p className="text-sm text-muted-foreground">Receipt #{Math.floor(Math.random() * 1000000)}</p>
+                  <p className="text-sm text-muted-foreground">{formatDateTime()}</p>
+                </div>
+                
+                <div className="mb-4">
+                  <p><span className="font-medium">Customer:</span> {customer.name}</p>
+                  {customer.mobile && <p><span className="font-medium">Mobile:</span> {customer.mobile}</p>}
+                </div>
+                
+                <div className="border-t border-b py-2 mb-4">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-sm font-medium">
+                        <th className="text-left">Item</th>
+                        <th className="text-right">Qty</th>
+                        <th className="text-right">Price</th>
+                        <th className="text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cart.map((item, index) => (
+                        <tr key={index} className="text-sm">
+                          <td className="text-left">{item.name}</td>
+                          <td className="text-right">{item.quantity} {item.unit}</td>
+                          <td className="text-right">₹{item.pricePerUnit}</td>
+                          <td className="text-right">₹{(item.quantity * item.pricePerUnit).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>₹{calculateSubtotal().toFixed(2)}</span>
+                  </div>
+                  
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-500">
+                      <span>Discount ({appliedCoupon.code}):</span>
+                      <span>- ₹{calculateDiscount().toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold pt-2 border-t">
+                    <span>Total:</span>
+                    <span>₹{calculateTotal().toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between pt-2">
+                    <span>Payment Mode:</span>
+                    <span>{paymentMethod === 'cash' ? 'Cash' : 'Online (UPI)'}</span>
+                  </div>
+                </div>
+                
+                <div className="mt-6 text-center text-xs text-muted-foreground">
+                  <p>Thank you for your purchase!</p>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button onClick={resetSale} className="bg-agri-primary hover:bg-agri-secondary">
+                  New Sale
                 </Button>
               </DialogFooter>
             </DialogContent>
