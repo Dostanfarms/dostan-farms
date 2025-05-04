@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Sidebar as SidebarContainer, 
   SidebarContent, 
@@ -49,21 +49,9 @@ export const Sidebar = () => {
       path: '/farmers',
       resource: 'farmers'
     },
-    {
-      title: 'Transactions',
-      icon: <Receipt className="h-5 w-5" />,
-      path: '/transactions',
-      resource: 'transactions'
-    },
-    {
-      title: 'Settlements',
-      icon: <DollarSign className="h-5 w-5" />,
-      path: '/settlements',
-      resource: 'settlements'
-    }
   ];
 
-  // Items moved to the "Manage" section
+  // Items in the "Manage" section
   const manageItems = [
     {
       title: 'Products',
@@ -76,6 +64,18 @@ export const Sidebar = () => {
       icon: <ShoppingCart className="h-5 w-5" />,
       path: '/sales',
       resource: 'sales'
+    },
+    {
+      title: 'Transactions',
+      icon: <Receipt className="h-5 w-5" />,
+      path: '/transactions',
+      resource: 'transactions'
+    },
+    {
+      title: 'Settlements',
+      icon: <DollarSign className="h-5 w-5" />,
+      path: '/settlements',
+      resource: 'settlements'
     },
     {
       title: 'Employees',

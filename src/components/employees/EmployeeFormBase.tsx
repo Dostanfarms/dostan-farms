@@ -34,6 +34,7 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
 }) => {
   const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
   const [availableVillages, setAvailableVillages] = useState<string[]>([]);
+  const [statesList] = useState<string[]>(Object.keys(states));
   
   useEffect(() => {
     if (formData.state) {
@@ -60,6 +61,18 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({ [name]: value });
+  };
+
+  // Email validation function
+  const validateEmail = (email: string) => {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  };
+
+  // Phone validation function (Indian mobile format)
+  const validatePhone = (phone: string) => {
+    const re = /^[6-9]\d{9}$/;
+    return re.test(String(phone));
   };
 
   return (
@@ -104,7 +117,11 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
           value={formData.email}
           onChange={handleInputChange}
           required
+          className={formData.email && !validateEmail(formData.email) ? "border-red-500" : ""}
         />
+        {formData.email && !validateEmail(formData.email) && 
+          <p className="text-xs text-red-500">Please enter a valid email address</p>
+        }
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -117,7 +134,11 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
             value={formData.phone}
             onChange={handleInputChange}
             required
+            className={formData.phone && !validatePhone(formData.phone) ? "border-red-500" : ""}
           />
+          {formData.phone && !validatePhone(formData.phone) && 
+            <p className="text-xs text-red-500">Please enter a valid 10-digit mobile number</p>
+          }
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
@@ -153,8 +174,8 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
           <SelectTrigger>
             <SelectValue placeholder="Select state" />
           </SelectTrigger>
-          <SelectContent>
-            {Object.keys(states).map(state => (
+          <SelectContent className="max-h-[200px]">
+            {statesList.map(state => (
               <SelectItem key={state} value={state}>{state}</SelectItem>
             ))}
           </SelectContent>
@@ -171,7 +192,7 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
             <SelectTrigger>
               <SelectValue placeholder="Select district" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[200px]">
               {availableDistricts.map(district => (
                 <SelectItem key={district} value={district}>{district}</SelectItem>
               ))}
@@ -188,7 +209,7 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
             <SelectTrigger>
               <SelectValue placeholder="Select village" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[200px]">
               {availableVillages.map(village => (
                 <SelectItem key={village} value={village}>{village}</SelectItem>
               ))}

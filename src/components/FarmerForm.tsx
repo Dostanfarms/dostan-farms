@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Farmer } from '@/utils/types';
-import { mockFarmers, STATES, DISTRICTS, VILLAGES } from '@/utils/mockData';
+import { mockFarmers } from '@/utils/mockData';
 import { Eye, EyeOff, Upload } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { states, districts, villages, banks } from '@/utils/locationData';
 
 interface FarmerFormProps {
   onSubmit: (farmer: Farmer) => void;
@@ -39,6 +40,7 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
   
   const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
   const [availableVillages, setAvailableVillages] = useState<string[]>([]);
+  const [statesList] = useState<string[]>(Object.keys(states));
 
   // Populate form when editing an existing farmer
   useEffect(() => {
@@ -63,16 +65,40 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
       }
       
       // Set available districts and villages if state and district are available
-      if (editFarmer.state) {
-        const districts = DISTRICTS[editFarmer.state] || [];
-        setAvailableDistricts(districts);
+      if (editFarmer.state && districts[editFarmer.state]) {
+        setAvailableDistricts(districts[editFarmer.state]);
         
-        if (editFarmer.district && VILLAGES[editFarmer.state]?.[editFarmer.district]) {
-          setAvailableVillages(VILLAGES[editFarmer.state][editFarmer.district]);
+        if (editFarmer.district && villages[editFarmer.district]) {
+          setAvailableVillages(villages[editFarmer.district]);
         }
       }
     }
   }, [editFarmer]);
+
+  // Update districts when state changes
+  useEffect(() => {
+    if (formData.state && districts[formData.state]) {
+      setAvailableDistricts(districts[formData.state]);
+      if (!districts[formData.state].includes(formData.district)) {
+        setFormData(prev => ({ ...prev, district: '', village: '' }));
+        setAvailableVillages([]);
+      }
+    } else {
+      setAvailableDistricts([]);
+    }
+  }, [formData.state]);
+
+  // Update villages when district changes
+  useEffect(() => {
+    if (formData.district && villages[formData.district]) {
+      setAvailableVillages(villages[formData.district]);
+      if (!villages[formData.district].includes(formData.village)) {
+        setFormData(prev => ({ ...prev, village: '' }));
+      }
+    } else {
+      setAvailableVillages([]);
+    }
+  }, [formData.district]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,22 +107,6 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Update districts when state changes
-    if (name === "state") {
-      const districts = DISTRICTS[value] || [];
-      setAvailableDistricts(districts);
-      setFormData(prev => ({ ...prev, district: '', village: '' }));
-      setAvailableVillages([]);
-    }
-    
-    // Update villages when district changes
-    else if (name === "district") {
-      const state = formData.state;
-      const villages = VILLAGES[state]?.[value] || [];
-      setAvailableVillages(villages);
-      setFormData(prev => ({ ...prev, village: '' }));
-    }
   };
 
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,9 +126,40 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
     setShowPassword(!showPassword);
   };
 
+  // Email validation function
+  const validateEmail = (email: string) => {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  };
+
+  // Phone validation function (Indian mobile format)
+  const validatePhone = (phone: string) => {
+    const re = /^[6-9]\d{9}$/;
+    return re.test(String(phone));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate email and phone
+    if (formData.email && !validateEmail(formData.email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (formData.phone && !validatePhone(formData.phone)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid 10-digit mobile number.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Basic validation
     if (!formData.name || !formData.phone || !formData.accountNumber || !formData.bankName || !formData.email || !formData.password || !formData.state) {
       toast({
@@ -215,7 +256,11 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
                   value={formData.phone}
                   onChange={handleChange}
                   required
+                  className={formData.phone && !validatePhone(formData.phone) ? "border-red-500" : ""}
                 />
+                {formData.phone && !validatePhone(formData.phone) && 
+                  <p className="text-xs text-red-500">Please enter a valid 10-digit mobile number</p>
+                }
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email *</Label>
@@ -227,7 +272,11 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  className={formData.email && !validateEmail(formData.email) ? "border-red-500" : ""}
                 />
+                {formData.email && !validateEmail(formData.email) && 
+                  <p className="text-xs text-red-500">Please enter a valid email address</p>
+                }
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password *</Label>
@@ -264,8 +313,8 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
                   <SelectTrigger>
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {STATES.map(state => (
+                  <SelectContent className="max-h-[200px]">
+                    {statesList.map(state => (
                       <SelectItem key={state} value={state}>{state}</SelectItem>
                     ))}
                   </SelectContent>
@@ -277,12 +326,12 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
                 <Select 
                   value={formData.district} 
                   onValueChange={(value) => handleSelectChange("district", value)}
-                  disabled={!formData.state}
+                  disabled={!formData.state || availableDistricts.length === 0}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select district" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px]">
                     {availableDistricts.map(district => (
                       <SelectItem key={district} value={district}>{district}</SelectItem>
                     ))}
@@ -300,7 +349,7 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
                   <SelectTrigger>
                     <SelectValue placeholder="Select village" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px]">
                     {availableVillages.map(village => (
                       <SelectItem key={village} value={village}>{village}</SelectItem>
                     ))}
@@ -318,6 +367,8 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
                   onChange={handleChange}
                 />
               </div>
+
+              {/* Banking Details */}
               <div className="space-y-2">
                 <Label htmlFor="accountNumber">Account Number *</Label>
                 <Input 
@@ -329,17 +380,24 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="bankName">Bank Name *</Label>
-                <Input 
-                  id="bankName" 
-                  name="bankName" 
-                  placeholder="Enter bank name" 
-                  value={formData.bankName}
-                  onChange={handleChange}
-                  required
-                />
+                <Select 
+                  value={formData.bankName} 
+                  onValueChange={(value) => handleSelectChange("bankName", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select bank" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {banks.map(bank => (
+                      <SelectItem key={bank} value={bank}>{bank}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="ifscCode">IFSC Code</Label>
                 <Input 

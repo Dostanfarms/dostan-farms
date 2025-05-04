@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import EmployeeFormBase, { EmployeeFormData } from './EmployeeFormBase';
+import { ArrowLeft } from 'lucide-react';
 
 interface EditEmployeeDialogProps {
   isOpen: boolean;
@@ -35,11 +36,22 @@ const EditEmployeeDialog: React.FC<EditEmployeeDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Edit Employee</DialogTitle>
-          <DialogDescription>
-            Update employee information and permissions.
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2" 
+            onClick={onCancel}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">Back</span>
+          </Button>
+          <div>
+            <DialogTitle>Edit Employee</DialogTitle>
+            <DialogDescription>
+              Update employee information and permissions.
+            </DialogDescription>
+          </div>
         </DialogHeader>
         
         <EmployeeFormBase

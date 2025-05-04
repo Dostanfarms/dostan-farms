@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,10 @@ import { Transaction } from '@/utils/types';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/Sidebar';
 import { format } from 'date-fns';
-import { ArrowUpRight, ArrowDownLeft, Check, X } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Check, X, ArrowLeft } from 'lucide-react';
 
 const Transactions = () => {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([...mockTransactions].sort(
     (a, b) => b.date.getTime() - a.date.getTime()
   ));
@@ -26,12 +28,25 @@ const Transactions = () => {
     );
   };
   
+  const handleBack = () => {
+    navigate('/');
+  };
+  
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <Sidebar />
         <main className="flex-1 p-6 overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center mb-6">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="mr-4" 
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">Back</span>
+            </Button>
             <h1 className="text-2xl font-bold">Transactions</h1>
           </div>
           
