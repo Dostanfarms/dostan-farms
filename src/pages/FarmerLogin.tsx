@@ -8,53 +8,101 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { mockFarmers } from '@/utils/mockData';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 const FarmerLogin = () => {
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+  // Validate phone number (10 digits, starts with 6-9)
+  const validatePhone = (phone: string) => {
+    const phoneRegex = /^[6-9]\d{9}$/;
+    return phoneRegex.test(phone);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSendOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validatePhone(phone)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid 10-digit phone number starting with 6-9",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    // Check if farmer exists with this phone number
+    const farmerExists = mockFarmers.some(farmer => farmer.phone === phone);
+    
+    if (!farmerExists) {
+      toast({
+        title: "Account not found",
+        description: "No farmer account exists with this phone number",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    // Generate a 6-digit OTP
+    const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(randomOtp);
+    
+    // Simulate API delay for sending OTP
+    setTimeout(() => {
+      setIsOtpSent(true);
+      setIsLoading(false);
+      
+      toast({
+        title: "OTP sent",
+        description: `A 6-digit OTP has been sent to ${phone}. For testing, use: ${randomOtp}`,
+      });
+    }, 1500);
+  };
+
+  const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate API call with timeout
+    
+    // Simulate API delay for verifying OTP
     setTimeout(() => {
-      const farmer = mockFarmers.find(
-        (farmer) => farmer.phone === phone && farmer.password === password
-      );
-      
-      if (farmer) {
-        // In a real app, you would use proper authentication
-        localStorage.setItem('currentFarmer', JSON.stringify({
-          id: farmer.id,
-          name: farmer.name,
-          isLoggedIn: true
-        }));
+      if (otp === generatedOtp) {
+        const farmer = mockFarmers.find(farmer => farmer.phone === phone);
         
-        toast({
-          title: "Login successful",
-          description: `Welcome back, ${farmer.name}!`,
-        });
-        
-        navigate(`/farmer-dashboard/${farmer.id}`);
+        if (farmer) {
+          // Store farmer login info
+          localStorage.setItem('currentFarmer', JSON.stringify({
+            id: farmer.id,
+            name: farmer.name,
+            isLoggedIn: true
+          }));
+          
+          toast({
+            title: "Login successful",
+            description: `Welcome back, ${farmer.name}!`,
+          });
+          
+          navigate(`/farmer-dashboard/${farmer.id}`);
+        }
       } else {
         toast({
-          title: "Login failed",
-          description: "Invalid phone number or password. Please try again.",
+          title: "Invalid OTP",
+          description: "The OTP you entered is incorrect. Please try again.",
           variant: "destructive"
         });
       }
       
       setIsLoading(false);
-    }, 1000);
+    }, 1500);
   };
 
   return (
@@ -68,54 +116,77 @@ const FarmerLogin = () => {
           <CardTitle className="text-2xl font-bold">Farmer Login</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Mobile Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Your mobile number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Button variant="link" type="button" className="text-xs p-0 h-auto">
-                  Forgot password?
-                </Button>
-              </div>
-              <div className="relative">
+          {!isOtpSent ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Mobile Number</Label>
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="phone"
+                  type="tel"
+                  placeholder="Your 10-digit mobile number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   required
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={togglePasswordVisibility}
+                <p className="text-xs text-muted-foreground">
+                  Enter your registered 10-digit mobile number
+                </p>
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-agri-primary hover:bg-agri-secondary"
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending OTP..." : "Send OTP"}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Enter OTP</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  maxLength={6}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter the 6-digit code sent to {phone}
+                </p>
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-agri-primary hover:bg-agri-secondary"
+                disabled={isLoading}
+              >
+                {isLoading ? "Verifying..." : "Verify OTP"}
+              </Button>
+              <div className="text-center">
+                <Button 
+                  variant="link" 
+                  type="button" 
+                  onClick={() => setIsOtpSent(false)}
+                  className="text-sm p-0"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                  Change phone number
                 </Button>
               </div>
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full bg-agri-primary hover:bg-agri-secondary"
-              disabled={isLoading}
-            >
-              {isLoading ? "Logging in..." : "Login"}
-            </Button>
-          </form>
+              <div className="text-center">
+                <Button 
+                  variant="link" 
+                  type="button"
+                  className="text-sm p-0"
+                  onClick={handleSendOtp}
+                  disabled={isLoading}
+                >
+                  Resend OTP
+                </Button>
+              </div>
+            </form>
+          )}
         </CardContent>
         <CardFooter className="flex justify-center">
           <Button

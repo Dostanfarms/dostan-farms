@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Package, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,7 +94,7 @@ const EmployeeLogin = () => {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2 justify-center items-center">
+        <CardFooter className="flex justify-center">
           <Button
             variant="link"
             type="button"
@@ -103,17 +103,6 @@ const EmployeeLogin = () => {
           >
             Go to Main Dashboard
           </Button>
-          <div className="flex flex-col items-center mt-2">
-            <span className="text-sm text-muted-foreground">Don't have an account?</span>
-            <Button
-              variant="link"
-              type="button"
-              onClick={() => navigate('/employee-register')}
-              className="text-sm"
-            >
-              Register now
-            </Button>
-          </div>
         </CardFooter>
       </Card>
     </div>

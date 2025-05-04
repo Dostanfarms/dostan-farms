@@ -64,7 +64,7 @@ export interface Customer {
   email?: string;
 }
 
-// New role-based access control types
+// Role-based access control types
 export type Role = 'admin' | 'manager' | 'sales' | 'accountant';
 
 export interface Permission {
@@ -86,4 +86,7 @@ export interface Employee {
   role: Role;
   profilePhoto?: string;
   dateJoined: Date;
+  state?: string;
+  district?: string;
+  village?: string;
 }

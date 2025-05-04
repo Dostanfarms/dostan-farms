@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,32 +18,69 @@ import { mockEmployees } from '@/utils/employeeData';
 import { Employee, Role } from '@/utils/types';
 import { useToast } from '@/components/ui/use-toast';
 import Sidebar from '@/components/Sidebar';
-import { UserPlus, Pencil, Trash2, User } from 'lucide-react';
+import { UserPlus, Pencil, Trash2, User, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
+import { states, districts, villages } from '@/utils/locationData';
 
 const Employees = () => {
-  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>(() => {
+    // Load employees from localStorage or use mock data
+    const storedEmployees = localStorage.getItem('registeredEmployees');
+    const parsedEmployees = storedEmployees ? JSON.parse(storedEmployees) : [];
+    return [...mockEmployees, ...parsedEmployees];
+  });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const { checkPermission } = useAuth();
+
+  // Available districts for the selected state
+  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
+  // Available villages for the selected district
+  const [availableVillages, setAvailableVillages] = useState<string[]>([]);
   
-  // Update the type of formData to include the Role type
   const [formData, setFormData] = useState<{
     name: string;
     email: string;
     phone: string;
     password: string;
     role: Role;
+    state: string;
+    district: string;
+    village: string;
   }>({
     name: '',
     email: '',
     phone: '',
     password: '',
-    role: 'sales'
+    role: 'sales',
+    state: '',
+    district: '',
+    village: ''
   });
+  
+  // Update available districts when state changes
+  useEffect(() => {
+    if (formData.state) {
+      setAvailableDistricts(districts[formData.state] || []);
+      setFormData(prev => ({ ...prev, district: '', village: '' }));
+    } else {
+      setAvailableDistricts([]);
+    }
+  }, [formData.state]);
+
+  // Update available villages when district changes
+  useEffect(() => {
+    if (formData.district) {
+      setAvailableVillages(villages[formData.district] || []);
+      setFormData(prev => ({ ...prev, village: '' }));
+    } else {
+      setAvailableVillages([]);
+    }
+  }, [formData.district]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -60,29 +97,96 @@ const Employees = () => {
     }));
   };
   
+  const handleStateChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      state: value
+    }));
+  };
+  
+  const handleDistrictChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      district: value
+    }));
+  };
+  
+  const handleVillageChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      village: value
+    }));
+  };
+  
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  
   const resetForm = () => {
     setFormData({
       name: '',
       email: '',
       phone: '',
       password: '',
-      role: 'sales'
+      role: 'sales',
+      state: '',
+      district: '',
+      village: ''
     });
     setSelectedEmployee(null);
+    setShowPassword(false);
+  };
+  
+  const validateForm = () => {
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    // Validate phone (10 digits, starting with proper range)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Phone number must be 10 digits and start with 6-9",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return true;
   };
   
   const handleAddEmployee = () => {
+    if (!validateForm()) return;
+    
     const newEmployee: Employee = {
-      id: (employees.length + 1).toString(),
+      id: `emp-${Date.now()}`,
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
       password: formData.password,
       role: formData.role,
+      state: formData.state,
+      district: formData.district, 
+      village: formData.village,
       dateJoined: new Date()
     };
     
-    setEmployees([...employees, newEmployee]);
+    const updatedEmployees = [...employees, newEmployee];
+    setEmployees(updatedEmployees);
+    
+    // Save to localStorage
+    const registeredEmployees = localStorage.getItem('registeredEmployees');
+    const parsedEmployees = registeredEmployees ? JSON.parse(registeredEmployees) : [];
+    localStorage.setItem('registeredEmployees', JSON.stringify([...parsedEmployees, newEmployee]));
+    
     setIsAddDialogOpen(false);
     resetForm();
     
@@ -99,13 +203,25 @@ const Employees = () => {
       email: employee.email,
       phone: employee.phone,
       password: employee.password,
-      role: employee.role
+      role: employee.role,
+      state: employee.state || '',
+      district: employee.district || '',
+      village: employee.village || ''
     });
     setIsEditDialogOpen(true);
+    
+    // Update available districts and villages if state/district is present
+    if (employee.state) {
+      setAvailableDistricts(districts[employee.state] || []);
+      
+      if (employee.district) {
+        setAvailableVillages(villages[employee.district] || []);
+      }
+    }
   };
   
   const handleUpdateEmployee = () => {
-    if (!selectedEmployee) return;
+    if (!selectedEmployee || !validateForm()) return;
     
     const updatedEmployees = employees.map(emp => {
       if (emp.id === selectedEmployee.id) {
@@ -115,13 +231,40 @@ const Employees = () => {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          role: formData.role
+          role: formData.role,
+          state: formData.state,
+          district: formData.district,
+          village: formData.village
         };
       }
       return emp;
     });
     
     setEmployees(updatedEmployees);
+    
+    // Update in localStorage
+    const registeredEmployees = localStorage.getItem('registeredEmployees');
+    if (registeredEmployees) {
+      const parsedEmployees = JSON.parse(registeredEmployees);
+      const updatedStoredEmployees = parsedEmployees.map((emp: Employee) => {
+        if (emp.id === selectedEmployee.id) {
+          return {
+            ...emp,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            role: formData.role,
+            state: formData.state,
+            district: formData.district,
+            village: formData.village
+          };
+        }
+        return emp;
+      });
+      localStorage.setItem('registeredEmployees', JSON.stringify(updatedStoredEmployees));
+    }
+    
     setIsEditDialogOpen(false);
     resetForm();
     
@@ -132,7 +275,16 @@ const Employees = () => {
   };
   
   const handleDeleteEmployee = (id: string) => {
-    setEmployees(employees.filter(emp => emp.id !== id));
+    const updatedEmployees = employees.filter(emp => emp.id !== id);
+    setEmployees(updatedEmployees);
+    
+    // Update in localStorage
+    const registeredEmployees = localStorage.getItem('registeredEmployees');
+    if (registeredEmployees) {
+      const parsedEmployees = JSON.parse(registeredEmployees);
+      const updatedStoredEmployees = parsedEmployees.filter((emp: Employee) => emp.id !== id);
+      localStorage.setItem('registeredEmployees', JSON.stringify(updatedStoredEmployees));
+    }
     
     toast({
       title: "Employee removed",
@@ -174,6 +326,7 @@ const Employees = () => {
                       <th className="text-left p-2">Email</th>
                       <th className="text-left p-2">Phone</th>
                       <th className="text-left p-2">Role</th>
+                      <th className="text-left p-2">Location</th>
                       <th className="text-left p-2">Date Joined</th>
                       <th className="text-right p-2">Actions</th>
                     </tr>
@@ -202,7 +355,16 @@ const Employees = () => {
                             {employee.role.charAt(0).toUpperCase() + employee.role.slice(1)}
                           </span>
                         </td>
-                        <td className="p-2">{format(employee.dateJoined, 'MMM dd, yyyy')}</td>
+                        <td className="p-2">
+                          {employee.state && employee.district ? 
+                            `${employee.district}, ${employee.state}` : 
+                            "Not specified"}
+                        </td>
+                        <td className="p-2">
+                          {employee.dateJoined instanceof Date 
+                            ? format(employee.dateJoined, 'MMM dd, yyyy') 
+                            : format(new Date(employee.dateJoined), 'MMM dd, yyyy')}
+                        </td>
                         <td className="p-2 text-right">
                           <div className="flex justify-end gap-2">
                             {canEdit && (
@@ -254,6 +416,7 @@ const Employees = () => {
                   placeholder="Full Name"
                   value={formData.name}
                   onChange={handleInputChange}
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -280,6 +443,7 @@ const Employees = () => {
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleInputChange}
+                required
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -292,18 +456,81 @@ const Employees = () => {
                   placeholder="Phone number"
                   value={formData.phone}
                   onChange={handleInputChange}
+                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Set password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Set password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Select value={formData.state} onValueChange={handleStateChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(states).map(state => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="district">District</Label>
+                <Select 
+                  value={formData.district} 
+                  onValueChange={handleDistrictChange}
+                  disabled={!formData.state}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableDistricts.map(district => (
+                      <SelectItem key={district} value={district}>{district}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="village">Village</Label>
+                <Select 
+                  value={formData.village} 
+                  onValueChange={handleVillageChange}
+                  disabled={!formData.district}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select village" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableVillages.map(village => (
+                      <SelectItem key={village} value={village}>{village}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -383,14 +610,75 @@ const Employees = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-password">Reset Password</Label>
-                <Input
-                  id="edit-password"
-                  name="password"
-                  type="password"
-                  placeholder="New password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
+                <div className="relative">
+                  <Input
+                    id="edit-password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="New password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-state">State</Label>
+              <Select value={formData.state} onValueChange={handleStateChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(states).map(state => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-district">District</Label>
+                <Select 
+                  value={formData.district} 
+                  onValueChange={handleDistrictChange}
+                  disabled={!formData.state}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableDistricts.map(district => (
+                      <SelectItem key={district} value={district}>{district}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-village">Village</Label>
+                <Select 
+                  value={formData.village} 
+                  onValueChange={handleVillageChange}
+                  disabled={!formData.district}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select village" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableVillages.map(village => (
+                      <SelectItem key={village} value={village}>{village}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
