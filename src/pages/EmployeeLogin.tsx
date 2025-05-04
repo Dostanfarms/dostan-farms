@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Package, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
 
@@ -94,16 +94,6 @@ const EmployeeLogin = () => {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button
-            variant="link"
-            type="button"
-            onClick={() => navigate('/')}
-            className="text-sm"
-          >
-            Go to Main Dashboard
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );

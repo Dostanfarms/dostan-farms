@@ -37,7 +37,11 @@ const Employees = () => {
     role: 'sales',
     state: '',
     district: '',
-    village: ''
+    village: '',
+    accountHolderName: '',
+    accountNumber: '',
+    bankName: '',
+    ifscCode: ''
   });
   
   const handleFormDataChange = (data: Partial<EmployeeFormData>) => {
@@ -60,7 +64,11 @@ const Employees = () => {
       role: 'sales',
       state: '',
       district: '',
-      village: ''
+      village: '',
+      accountHolderName: '',
+      accountNumber: '',
+      bankName: '',
+      ifscCode: ''
     });
     setSelectedEmployee(null);
     setShowPassword(false);
@@ -88,6 +96,31 @@ const Employees = () => {
       });
       return false;
     }
+
+    // Only validate bank details if they're provided
+    if (formData.accountNumber) {
+      const accountNumberRegex = /^\d{9,18}$/;
+      if (!accountNumberRegex.test(formData.accountNumber)) {
+        toast({
+          title: "Invalid account number",
+          description: "Account number should be 9-18 digits",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
+
+    if (formData.ifscCode) {
+      const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+      if (!ifscRegex.test(formData.ifscCode)) {
+        toast({
+          title: "Invalid IFSC code",
+          description: "Please enter a valid IFSC code",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
     
     return true;
   };
@@ -105,6 +138,11 @@ const Employees = () => {
       state: formData.state,
       district: formData.district, 
       village: formData.village,
+      profilePhoto: formData.profilePhoto,
+      accountHolderName: formData.accountHolderName,
+      accountNumber: formData.accountNumber,
+      bankName: formData.bankName,
+      ifscCode: formData.ifscCode,
       dateJoined: new Date()
     };
     
@@ -140,7 +178,12 @@ const Employees = () => {
       role: employee.role,
       state: employee.state || '',
       district: employee.district || '',
-      village: employee.village || ''
+      village: employee.village || '',
+      profilePhoto: employee.profilePhoto,
+      accountHolderName: employee.accountHolderName || '',
+      accountNumber: employee.accountNumber || '',
+      bankName: employee.bankName || '',
+      ifscCode: employee.ifscCode || ''
     });
     setIsEditDialogOpen(true);
   };
@@ -164,7 +207,12 @@ const Employees = () => {
           role: formData.role,
           state: formData.state,
           district: formData.district,
-          village: formData.village
+          village: formData.village,
+          profilePhoto: formData.profilePhoto,
+          accountHolderName: formData.accountHolderName,
+          accountNumber: formData.accountNumber,
+          bankName: formData.bankName,
+          ifscCode: formData.ifscCode
         };
       }
       return emp;
@@ -187,7 +235,12 @@ const Employees = () => {
             role: formData.role,
             state: formData.state,
             district: formData.district,
-            village: formData.village
+            village: formData.village,
+            profilePhoto: formData.profilePhoto,
+            accountHolderName: formData.accountHolderName,
+            accountNumber: formData.accountNumber,
+            bankName: formData.bankName,
+            ifscCode: formData.ifscCode
           };
         }
         return emp;

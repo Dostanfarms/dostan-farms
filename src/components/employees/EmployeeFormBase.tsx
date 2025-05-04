@@ -4,9 +4,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Upload } from 'lucide-react';
 import { Role } from '@/utils/types';
-import { states, districts, villages } from '@/utils/locationData';
+import { states, districts, villages, banks } from '@/utils/locationData';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export interface EmployeeFormData {
   name: string;
@@ -17,6 +18,11 @@ export interface EmployeeFormData {
   state: string;
   district: string;
   village: string;
+  profilePhoto?: string;
+  accountHolderName: string;
+  accountNumber: string;
+  bankName: string;
+  ifscCode: string;
 }
 
 interface EmployeeFormBaseProps {
@@ -35,6 +41,10 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
   const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
   const [availableVillages, setAvailableVillages] = useState<string[]>([]);
   const [statesList] = useState<string[]>(Object.keys(states));
+  const [banksList] = useState<string[]>(banks);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
+    formData.profilePhoto || null
+  );
   
   useEffect(() => {
     if (formData.state) {
@@ -63,6 +73,19 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
     onChange({ [name]: value });
   };
 
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfilePhotoPreview(result);
+        onChange({ profilePhoto: result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Email validation function
   const validateEmail = (email: string) => {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -75,8 +98,50 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
     return re.test(String(phone));
   };
 
+  // IFSC code validation
+  const validateIFSC = (ifsc: string) => {
+    const re = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+    return re.test(String(ifsc));
+  };
+
+  // Account number validation
+  const validateAccountNumber = (accountNumber: string) => {
+    const re = /^\d{9,18}$/;
+    return re.test(String(accountNumber));
+  };
+
   return (
     <div className="grid gap-4 py-4">
+      <div className="flex justify-center mb-4">
+        <div className="text-center">
+          <Avatar className="w-24 h-24 mx-auto mb-2">
+            {profilePhotoPreview ? (
+              <AvatarImage src={profilePhotoPreview} alt={formData.name} />
+            ) : (
+              <AvatarFallback>{formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+            )}
+          </Avatar>
+          <div className="relative">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="text-xs flex items-center"
+              onClick={() => document.getElementById('profile-photo')?.click()}
+            >
+              <Upload className="mr-1 h-3 w-3" /> Upload Photo
+            </Button>
+            <Input
+              id="profile-photo"
+              name="profilePhoto"
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePhotoChange}
+              className="hidden"
+            />
+          </div>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
@@ -143,11 +208,11 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <div className="relative">
-            <Input
-              id="password"
-              name="password"
+            <Input 
+              id="password" 
+              name="password" 
               type={showPassword ? "text" : "password"}
-              placeholder="Set password"
+              placeholder="Set password" 
               value={formData.password}
               onChange={handleInputChange}
               required
@@ -165,56 +230,122 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
           </div>
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="state">State</Label>
-        <Select 
-          value={formData.state} 
-          onValueChange={(value) => onChange({ state: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select state" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[200px]">
-            {statesList.map(state => (
-              <SelectItem key={state} value={state}>{state}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      
+      {/* Bank Account Details */}
+      <div className="border-t pt-4 mt-2">
+        <h3 className="font-medium mb-3">Bank Account Details</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="accountHolderName">Account Holder Name</Label>
+            <Input
+              id="accountHolderName"
+              name="accountHolderName"
+              placeholder="Account holder name"
+              value={formData.accountHolderName}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="bankName">Bank Name</Label>
+            <Select 
+              value={formData.bankName} 
+              onValueChange={(value) => onChange({ bankName: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select bank" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px]">
+                {banksList.map(bank => (
+                  <SelectItem key={bank} value={bank}>{bank}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="accountNumber">Account Number</Label>
+            <Input
+              id="accountNumber"
+              name="accountNumber"
+              placeholder="Account number"
+              value={formData.accountNumber}
+              onChange={handleInputChange}
+              className={formData.accountNumber && !validateAccountNumber(formData.accountNumber) ? "border-red-500" : ""}
+            />
+            {formData.accountNumber && !validateAccountNumber(formData.accountNumber) && 
+              <p className="text-xs text-red-500">Account number should be 9-18 digits</p>
+            }
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ifscCode">IFSC Code</Label>
+            <Input
+              id="ifscCode"
+              name="ifscCode"
+              placeholder="IFSC code"
+              value={formData.ifscCode}
+              onChange={handleInputChange}
+              className={formData.ifscCode && !validateIFSC(formData.ifscCode) ? "border-red-500" : ""}
+            />
+            {formData.ifscCode && !validateIFSC(formData.ifscCode) && 
+              <p className="text-xs text-red-500">Please enter a valid IFSC code</p>
+            }
+          </div>
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      
+      {/* Location fields */}
+      <div className="border-t pt-4 mt-2">
+        <h3 className="font-medium mb-3">Location Details</h3>
         <div className="space-y-2">
-          <Label htmlFor="district">District</Label>
+          <Label htmlFor="state">State</Label>
           <Select 
-            value={formData.district} 
-            onValueChange={(value) => onChange({ district: value })}
-            disabled={!formData.state}
+            value={formData.state} 
+            onValueChange={(value) => onChange({ state: value })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select district" />
+              <SelectValue placeholder="Select state" />
             </SelectTrigger>
             <SelectContent className="max-h-[200px]">
-              {availableDistricts.map(district => (
-                <SelectItem key={district} value={district}>{district}</SelectItem>
+              {statesList.map(state => (
+                <SelectItem key={state} value={state}>{state}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="village">Village</Label>
-          <Select 
-            value={formData.village} 
-            onValueChange={(value) => onChange({ village: value })}
-            disabled={!formData.district}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select village" />
-            </SelectTrigger>
-            <SelectContent className="max-h-[200px]">
-              {availableVillages.map(village => (
-                <SelectItem key={village} value={village}>{village}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="district">District</Label>
+            <Select 
+              value={formData.district} 
+              onValueChange={(value) => onChange({ district: value })}
+              disabled={!formData.state || availableDistricts.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select district" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px]">
+                {availableDistricts.map(district => (
+                  <SelectItem key={district} value={district}>{district}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="village">Village</Label>
+            <Select 
+              value={formData.village} 
+              onValueChange={(value) => onChange({ village: value })}
+              disabled={!formData.district || availableVillages.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select village" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px]">
+                {availableVillages.map(village => (
+                  <SelectItem key={village} value={village}>{village}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
     </div>

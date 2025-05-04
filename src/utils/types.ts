@@ -37,6 +37,7 @@ export interface Transaction {
   description: string;
   farmerId: string;
   settled: boolean;
+  paymentMode?: 'Cash' | 'Online';
 }
 
 export interface DailyEarning {
@@ -89,4 +90,8 @@ export interface Employee {
   state?: string;
   district?: string;
   village?: string;
+  accountHolderName?: string;
+  accountNumber?: string;
+  bankName?: string;
+  ifscCode?: string;
 }
