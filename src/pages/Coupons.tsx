@@ -333,7 +333,7 @@ const Coupons = () => {
                 {discountType === 'percentage' && (
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="maxDiscountLimit" className="text-right">
-                      Max Limit
+                      Max Discount Limit
                     </Label>
                     <div className="col-span-3 flex items-center">
                       <Input
@@ -375,7 +375,6 @@ const Coupons = () => {
                           onSelect={setExpiryDate}
                           disabled={(date) => date < new Date()}
                           initialFocus
-                          className="pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
