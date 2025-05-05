@@ -19,6 +19,7 @@ import EmployeeLogin from "./pages/EmployeeLogin";
 import Transactions from "./pages/Transactions";
 import AccessDenied from "./pages/AccessDenied";
 import NotFound from "./pages/NotFound";
+import Coupons from "./pages/Coupons";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,10 @@ const App = () => (
 
             <Route element={<ProtectedRoute resource="settlements" action="view" />}>
               <Route path="/settlements" element={<Transactions />} />
+            </Route>
+            
+            <Route element={<ProtectedRoute resource="coupons" action="view" />}>
+              <Route path="/coupons" element={<Coupons />} />
             </Route>
             
             <Route element={<ProtectedRoute resource="employees" action="view" />}>
