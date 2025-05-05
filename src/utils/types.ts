@@ -1,4 +1,3 @@
-
 export interface Farmer {
   id: string;
   name: string;
@@ -75,7 +74,7 @@ export interface Coupon {
 }
 
 // Role-based access control types
-export type Role = 'admin' | 'manager' | 'sales' | 'accountant';
+export type Role = string;
 
 export interface Permission {
   resource: string;

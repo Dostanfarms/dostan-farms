@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -28,9 +27,19 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Role, RolePermission } from '@/utils/types';
 import { rolePermissions } from '@/utils/employeeData';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Sidebar from '@/components/Sidebar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const resources = [
   { id: 'dashboard', name: 'Dashboard' },
@@ -39,6 +48,7 @@ const resources = [
   { id: 'sales', name: 'Add Sale' },
   { id: 'transactions', name: 'Transactions' },
   { id: 'settlements', name: 'Settlements' },
+  { id: 'coupons', name: 'Coupons' },
   { id: 'employees', name: 'Employees' },
   { id: 'roles', name: 'Roles' }
 ];
@@ -56,6 +66,8 @@ const Roles = () => {
   const [selectedRole, setSelectedRole] = useState<Role>('admin');
   const [permissions, setPermissions] = useState<RolePermission['permissions']>([]);
   const [savedRolePermissions, setSavedRolePermissions] = useState<RolePermission[]>([]);
+  const [createRoleDialogOpen, setCreateRoleDialogOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
 
   useEffect(() => {
     // Load role permissions from localStorage or use default
@@ -128,22 +140,75 @@ const Roles = () => {
     return resourcePermission?.actions.includes(action as 'view' | 'create' | 'edit' | 'delete') || false;
   };
 
+  const handleCreateRole = () => {
+    if (!newRoleName.trim()) {
+      toast({
+        title: "Role name required",
+        description: "Please provide a name for the new role.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Convert to lowercase and remove spaces for role ID
+    const roleId = newRoleName.toLowerCase().replace(/\s+/g, '-') as Role;
+    
+    // Check if role already exists
+    if (savedRolePermissions.some(rp => rp.role === roleId)) {
+      toast({
+        title: "Role already exists",
+        description: `A role with the ID '${roleId}' already exists.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create new role with default permissions (view dashboard only)
+    const newRole: RolePermission = {
+      role: roleId as Role,
+      permissions: [{ resource: 'dashboard', actions: ['view'] }]
+    };
+    
+    const updatedRoles = [...savedRolePermissions, newRole];
+    setSavedRolePermissions(updatedRoles);
+    localStorage.setItem('rolePermissions', JSON.stringify(updatedRoles));
+    
+    // Close dialog and select the new role
+    setCreateRoleDialogOpen(false);
+    setNewRoleName('');
+    setSelectedRole(roleId as Role);
+    
+    toast({
+      title: "Role Created",
+      description: `New role '${newRoleName}' has been created successfully.`
+    });
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <Sidebar />
         <div className="container mx-auto py-6">
-          <div className="flex items-center mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="mr-4" 
+                onClick={handleBack}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Back</span>
+              </Button>
+              <h1 className="text-2xl font-bold">Role Management</h1>
+            </div>
             <Button 
-              variant="outline" 
-              size="icon" 
-              className="mr-4" 
-              onClick={handleBack}
+              onClick={() => setCreateRoleDialogOpen(true)}
+              className="bg-agri-primary hover:bg-agri-secondary"
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Back</span>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Role
             </Button>
-            <h1 className="text-2xl font-bold">Role Management</h1>
           </div>
           
           <Card>
@@ -162,10 +227,11 @@ const Roles = () => {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="sales">Sales</SelectItem>
-                    <SelectItem value="accountant">Accountant</SelectItem>
+                    {savedRolePermissions.map((rp) => (
+                      <SelectItem key={rp.role} value={rp.role}>
+                        {rp.role.charAt(0).toUpperCase() + rp.role.slice(1)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -211,6 +277,37 @@ const Roles = () => {
               </div>
             </CardContent>
           </Card>
+          
+          <Dialog open={createRoleDialogOpen} onOpenChange={setCreateRoleDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create New Role</DialogTitle>
+                <DialogDescription>
+                  Add a new role to the system. You can set permissions after creation.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="roleName" className="text-right">
+                    Role Name
+                  </Label>
+                  <Input
+                    id="roleName"
+                    placeholder="e.g., Store Manager"
+                    className="col-span-3"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCreateRoleDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateRole}>Create Role</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </SidebarProvider>
