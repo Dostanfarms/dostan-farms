@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,13 @@ import { Label } from '@/components/ui/label';
 import Sidebar from '@/components/Sidebar';
 import { mockProducts } from '@/utils/mockData';
 import { Product, CartItem, Customer, Coupon } from '@/utils/types';
-import { Search, ShoppingCart, Package, Tag, Plus, Minus, Trash2, CreditCard, Check, Receipt } from 'lucide-react';
+import { Search, ShoppingCart, Package, Tag, Plus, Minus, Trash2, CreditCard, Check, Receipt, Printer, CreditCard as PosIcon, Coins, QrCode } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import QRCode from 'react-qr-code';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Sales = () => {
   const { toast } = useToast();
@@ -23,15 +24,48 @@ const Sales = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isPaymentSuccessDialogOpen, setIsPaymentSuccessDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantityToAdd, setQuantityToAdd] = useState(1);
   const [customer, setCustomer] = useState<Customer>({ name: '', mobile: '', email: '' });
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
-  const [upiQrVisible, setUpiQrVisible] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online' | 'pos'>('online');
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState('');
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+  const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Load available coupons
+  React.useEffect(() => {
+    // In a real app, fetch from API/backend
+    const mockCoupons: Coupon[] = [
+      { 
+        code: 'DISCOUNT10', 
+        discountType: 'percentage', 
+        discountValue: 10,
+        maxDiscountLimit: 1000,
+        expiryDate: new Date('2025-12-31')
+      },
+      {
+        code: 'FLAT500',
+        discountType: 'flat',
+        discountValue: 500,
+        expiryDate: new Date('2025-12-31')
+      },
+      {
+        code: 'SUMMER20',
+        discountType: 'percentage',
+        discountValue: 20,
+        maxDiscountLimit: 2000,
+        expiryDate: new Date('2025-08-31')
+      }
+    ];
+    
+    // Filter to only show valid coupons
+    const validCoupons = mockCoupons.filter(coupon => new Date(coupon.expiryDate) > new Date());
+    setAvailableCoupons(validCoupons);
+  }, []);
   
   // Filter products based on search
   const filteredProducts = products.filter(product => 
@@ -140,8 +174,6 @@ const Sales = () => {
   };
 
   const validateCoupon = () => {
-    // In a real application, you would fetch coupons from your backend
-    // For now, we'll use a mock coupon for demonstration
     setCouponError('');
     
     // Check if coupon code is empty
@@ -150,41 +182,23 @@ const Sales = () => {
       return;
     }
     
-    // Mock API call to validate coupon
-    setTimeout(() => {
-      const mockCoupons: Coupon[] = [
-        { 
-          code: 'DISCOUNT10', 
-          discountType: 'percentage', 
-          discountValue: 10,
-          maxDiscountLimit: 1000,
-          expiryDate: new Date('2025-12-31')
-        },
-        {
-          code: 'FLAT500',
-          discountType: 'flat',
-          discountValue: 500,
-          expiryDate: new Date('2025-12-31')
-        }
-      ];
+    // Find the coupon in our available coupons
+    const foundCoupon = availableCoupons.find(
+      c => c.code.toLowerCase() === couponCode.toLowerCase()
+    );
       
-      const foundCoupon = mockCoupons.find(
-        c => c.code.toLowerCase() === couponCode.toLowerCase() && c.expiryDate > new Date()
-      );
-      
-      if (foundCoupon) {
-        setAppliedCoupon(foundCoupon);
-        toast({
-          title: "Coupon applied",
-          description: foundCoupon.discountType === 'percentage'
-            ? `${foundCoupon.discountValue}% discount applied`
-            : `₹${foundCoupon.discountValue} discount applied`
-        });
-      } else {
-        setAppliedCoupon(null);
-        setCouponError('Invalid or expired coupon code');
-      }
-    }, 500);
+    if (foundCoupon) {
+      setAppliedCoupon(foundCoupon);
+      toast({
+        title: "Coupon applied",
+        description: foundCoupon.discountType === 'percentage'
+          ? `${foundCoupon.discountValue}% discount applied`
+          : `₹${foundCoupon.discountValue} discount applied`
+      });
+    } else {
+      setAppliedCoupon(null);
+      setCouponError('Invalid or expired coupon code');
+    }
   };
 
   const removeCoupon = () => {
@@ -192,7 +206,7 @@ const Sales = () => {
     setCouponCode('');
   };
 
-  const processPayment = () => {
+  const proceedToPayment = () => {
     // Validate customer information
     if (!customer.name || !customer.mobile) {
       toast({
@@ -203,21 +217,12 @@ const Sales = () => {
       return;
     }
 
-    if (paymentMethod === 'online') {
-      setUpiQrVisible(true);
-    } else {
-      // Cash payment
-      completeOrder();
-    }
+    setIsCheckoutDialogOpen(false);
+    setIsPaymentDialogOpen(true);
   };
 
   const handlePaymentSuccess = () => {
-    setUpiQrVisible(false);
-    completeOrder();
-  };
-
-  const completeOrder = () => {
-    setIsCheckoutDialogOpen(false);
+    setIsPaymentDialogOpen(false);
     setIsPaymentSuccessDialogOpen(true);
   };
 
@@ -225,7 +230,54 @@ const Sales = () => {
     setIsPaymentSuccessDialogOpen(false);
     setCart([]);
     setCustomer({ name: '', mobile: '', email: '' });
-    setPaymentMethod('cash');
+    setPaymentMethod('online');
+  };
+
+  const printReceipt = () => {
+    if (receiptRef.current) {
+      const printContent = receiptRef.current.innerHTML;
+      const originalContents = document.body.innerHTML;
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print Receipt</title>
+              <style>
+                body { font-family: Arial, sans-serif; }
+                .receipt-container { max-width: 300px; margin: 0 auto; padding: 20px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { text-align: left; padding: 5px 0; }
+                .text-right { text-align: right; }
+                .text-center { text-align: center; }
+                .border-top { border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px; }
+                .border-bottom { border-bottom: 1px solid #ddd; margin-bottom: 8px; padding-bottom: 8px; }
+                .text-sm { font-size: 0.875rem; }
+                .text-xs { font-size: 0.75rem; }
+                .font-bold { font-weight: bold; }
+              </style>
+            </head>
+            <body>
+              <div class="receipt-container">
+                ${printContent}
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      } else {
+        toast({
+          title: "Unable to open print window",
+          description: "Please check your browser settings and try again.",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   const formatDateTime = () => {
@@ -244,6 +296,62 @@ const Sales = () => {
   const generateUpiPaymentUri = () => {
     const total = calculateTotal();
     return `upi://pay?pa=2755c@ybl&pn=AgriPayStore&am=${total.toFixed(2)}&cu=INR&tn=Purchase at AgriPay Store`;
+  };
+
+  // Display payment options section
+  const renderPaymentOptions = () => {
+    return (
+      <Tabs defaultValue="online" className="w-full" onValueChange={(v) => setPaymentMethod(v as 'cash' | 'online' | 'pos')}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="online">QR Code (UPI)</TabsTrigger>
+          <TabsTrigger value="cash">Cash</TabsTrigger>
+          <TabsTrigger value="pos">POS Machine</TabsTrigger>
+        </TabsList>
+        <TabsContent value="online" className="py-4">
+          <div className="flex flex-col items-center justify-center py-2">
+            <div className="bg-white p-4 rounded-md shadow-sm">
+              <QRCode
+                value={generateUpiPaymentUri()}
+                size={200}
+              />
+            </div>
+            <p className="mt-4 text-sm text-center text-muted-foreground">
+              Scan with any UPI app to pay ₹{calculateTotal().toFixed(2)}
+            </p>
+            <p className="text-sm text-center text-muted-foreground">
+              UPI ID: 2755c@ybl
+            </p>
+          </div>
+          <div className="flex justify-center mt-4">
+            <Button onClick={handlePaymentSuccess} className="bg-green-600 hover:bg-green-700">
+              <Check className="mr-2 h-4 w-4" /> Payment Complete
+            </Button>
+          </div>
+        </TabsContent>
+        <TabsContent value="cash" className="py-4">
+          <div className="flex flex-col items-center justify-center py-6">
+            <Coins className="h-16 w-16 text-yellow-500 mb-4" />
+            <p className="text-center mb-4">
+              Collect <span className="font-bold">₹{calculateTotal().toFixed(2)}</span> cash from the customer
+            </p>
+            <Button onClick={handlePaymentSuccess} className="bg-green-600 hover:bg-green-700">
+              <Check className="mr-2 h-4 w-4" /> Payment Complete
+            </Button>
+          </div>
+        </TabsContent>
+        <TabsContent value="pos" className="py-4">
+          <div className="flex flex-col items-center justify-center py-6">
+            <PosIcon className="h-16 w-16 text-blue-500 mb-4" />
+            <p className="text-center mb-4">
+              Process <span className="font-bold">₹{calculateTotal().toFixed(2)}</span> through POS machine
+            </p>
+            <Button onClick={handlePaymentSuccess} className="bg-green-600 hover:bg-green-700">
+              <Check className="mr-2 h-4 w-4" /> Payment Complete
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
+    );
   };
 
   return (
@@ -502,6 +610,28 @@ const Sales = () => {
                 
                 <div className="border-t my-2"></div>
                 
+                {/* Available Coupons Section */}
+                <div className="mb-2">
+                  <h3 className="font-medium text-sm mb-2">Available Coupons:</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {availableCoupons.length > 0 ? (
+                      availableCoupons.map((coupon, index) => (
+                        <Badge 
+                          key={index}
+                          className="cursor-pointer bg-muted hover:bg-muted/80 text-foreground"
+                          onClick={() => setCouponCode(coupon.code)}
+                        >
+                          {coupon.code} - {coupon.discountType === 'percentage' 
+                            ? `${coupon.discountValue}% off` 
+                            : `₹${coupon.discountValue} off`}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No coupons available</p>
+                    )}
+                  </div>
+                </div>
+                
                 {/* Coupon section */}
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="couponCode" className="text-right">
@@ -558,32 +688,6 @@ const Sales = () => {
                 
                 <div className="border-t my-2"></div>
                 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">
-                    Payment
-                  </Label>
-                  <div className="col-span-3 flex space-x-2">
-                    <Button
-                      type="button"
-                      variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                      onClick={() => setPaymentMethod('cash')}
-                      className={paymentMethod === 'cash' ? 'bg-agri-primary hover:bg-agri-secondary' : ''}
-                    >
-                      Cash
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={paymentMethod === 'online' ? 'default' : 'outline'}
-                      onClick={() => setPaymentMethod('online')}
-                      className={paymentMethod === 'online' ? 'bg-agri-primary hover:bg-agri-secondary' : ''}
-                    >
-                      Online
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="border-t my-2"></div>
-                
                 {/* Summary section */}
                 <div className="space-y-2">
                   <div className="flex justify-between">
@@ -609,47 +713,35 @@ const Sales = () => {
                 <Button variant="outline" onClick={() => setIsCheckoutDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={processPayment} className="bg-agri-primary hover:bg-agri-secondary">
-                  {paymentMethod === 'online' ? 'Generate Payment QR' : 'Complete Sale'}
+                <Button onClick={proceedToPayment} className="bg-agri-primary hover:bg-agri-secondary">
+                  Proceed to Payment
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
-          {/* UPI Payment QR Dialog */}
-          {upiQrVisible && (
-            <Dialog open={upiQrVisible} onOpenChange={setUpiQrVisible}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>UPI Payment</DialogTitle>
-                  <DialogDescription>
-                    Scan this QR code to pay ₹{calculateTotal().toFixed(2)}
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="flex flex-col items-center justify-center py-6">
-                  <div className="bg-white p-4 rounded-md">
-                    <QRCode
-                      value={generateUpiPaymentUri()}
-                      size={200}
-                    />
-                  </div>
-                  <p className="mt-4 text-sm text-center text-muted-foreground">
-                    UPI ID: 2755c@ybl
-                  </p>
-                </div>
-                
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setUpiQrVisible(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handlePaymentSuccess} className="bg-green-600 hover:bg-green-700">
-                    <Check className="mr-2 h-4 w-4" /> Payment Complete
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
+          {/* Payment Method Dialog */}
+          <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Select Payment Method</DialogTitle>
+                <DialogDescription>
+                  Choose how the customer will pay ₹{calculateTotal().toFixed(2)}
+                </DialogDescription>
+              </DialogHeader>
+              
+              {renderPaymentOptions()}
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setIsPaymentDialogOpen(false);
+                  setIsCheckoutDialogOpen(true);
+                }}>
+                  Back
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           
           {/* Payment Success & Receipt Dialog */}
           <Dialog open={isPaymentSuccessDialogOpen} onOpenChange={setIsPaymentSuccessDialogOpen}>
@@ -664,7 +756,7 @@ const Sales = () => {
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="border rounded-md p-4">
+              <div className="border rounded-md p-4" ref={receiptRef}>
                 <div className="text-center mb-4">
                   <h3 className="font-bold text-lg">AgriPay Store</h3>
                   <p className="text-sm text-muted-foreground">Receipt #{Math.floor(Math.random() * 1000000)}</p>
@@ -719,7 +811,7 @@ const Sales = () => {
                   
                   <div className="flex justify-between pt-2">
                     <span>Payment Mode:</span>
-                    <span>{paymentMethod === 'cash' ? 'Cash' : 'Online (UPI)'}</span>
+                    <span>{paymentMethod === 'cash' ? 'Cash' : paymentMethod === 'pos' ? 'POS Machine' : 'Online (UPI)'}</span>
                   </div>
                 </div>
                 
@@ -728,8 +820,18 @@ const Sales = () => {
                 </div>
               </div>
               
-              <DialogFooter>
-                <Button onClick={resetSale} className="bg-agri-primary hover:bg-agri-secondary">
+              <DialogFooter className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 gap-2" 
+                  onClick={printReceipt}
+                >
+                  <Printer className="h-4 w-4" /> Print Receipt
+                </Button>
+                <Button 
+                  onClick={resetSale} 
+                  className="flex-1 bg-agri-primary hover:bg-agri-secondary"
+                >
                   New Sale
                 </Button>
               </DialogFooter>
