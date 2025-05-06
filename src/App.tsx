@@ -20,6 +20,14 @@ import Transactions from "./pages/Transactions";
 import AccessDenied from "./pages/AccessDenied";
 import NotFound from "./pages/NotFound";
 import Coupons from "./pages/Coupons";
+import AppLanding from "./pages/AppLanding";
+import CustomerLogin from "./pages/CustomerLogin";
+import CustomerRegister from "./pages/CustomerRegister";
+import CustomerProfile from "./pages/CustomerProfile";
+import OrderHistory from "./pages/OrderHistory";
+import CustomerHome from "./pages/CustomerHome";
+import PaymentPage from "./pages/PaymentPage";
+import OrderTracking from "./pages/OrderTracking";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +43,9 @@ const App = () => (
             <Route path="/farmer-login" element={<FarmerLogin />} />
             <Route path="/employee-login" element={<EmployeeLogin />} />
             <Route path="/access-denied" element={<AccessDenied />} />
+            <Route path="/app-landing" element={<AppLanding />} />
+            <Route path="/customer-login" element={<CustomerLogin />} />
+            <Route path="/customer-register" element={<CustomerRegister />} />
             
             {/* Protected routes */}
             <Route element={<ProtectedRoute resource="dashboard" action="view" />}>
@@ -57,14 +68,9 @@ const App = () => (
             <Route element={<ProtectedRoute resource="transactions" action="view" />}>
               <Route path="/transactions" element={<Transactions />} />
             </Route>
-
-            <Route element={<ProtectedRoute resource="settlements" action="view" />}>
-              <Route path="/settlements" element={<Transactions />} />
-            </Route>
             
-            <Route element={<ProtectedRoute resource="coupons" action="view" />}>
-              <Route path="/coupons" element={<Coupons />} />
-            </Route>
+            {/* Removed ProtectedRoute for Coupons to allow all roles access */}
+            <Route path="/coupons" element={<Coupons />} />
             
             <Route element={<ProtectedRoute resource="employees" action="view" />}>
               <Route path="/employees" element={<Employees />} />
@@ -76,6 +82,13 @@ const App = () => (
             
             {/* Farmer dashboard - separate auth system */}
             <Route path="/farmer-dashboard/:id" element={<FarmerDashboard />} />
+            
+            {/* Customer routes */}
+            <Route path="/customer-profile" element={<CustomerProfile />} />
+            <Route path="/order-history" element={<OrderHistory />} />
+            <Route path="/customer-home" element={<CustomerHome />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/order-tracking/:id" element={<OrderTracking />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

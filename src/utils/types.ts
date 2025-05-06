@@ -60,9 +60,32 @@ export interface CartItem {
 }
 
 export interface Customer {
+  id?: string;
   name: string;
   mobile: string;
   email?: string;
+  address?: string;
+  pincode?: string;
+  dateJoined?: string;
+}
+
+// Order Management types
+export interface Order {
+  id: string;
+  customerId: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'placed' | 'packed' | 'shipping' | 'delivered' | 'cancelled';
+  date: string;
+  trackingInfo?: string;
+  estimatedDelivery?: string;
+  paymentMethod?: 'cash' | 'online';
+}
+
+export interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
 }
 
 // Coupon system types
