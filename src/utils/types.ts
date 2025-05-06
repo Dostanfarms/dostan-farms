@@ -1,4 +1,3 @@
-
 export interface Farmer {
   id: string;
   name: string;
@@ -57,6 +56,7 @@ export interface CartItem {
   pricePerUnit: number;
   unit: string;
   category: string;
+  farmerId: string;
 }
 
 export interface Customer {

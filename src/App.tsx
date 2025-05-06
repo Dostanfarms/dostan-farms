@@ -28,6 +28,8 @@ import OrderHistory from "./pages/OrderHistory";
 import CustomerHome from "./pages/CustomerHome";
 import PaymentPage from "./pages/PaymentPage";
 import OrderTracking from "./pages/OrderTracking";
+import CartPage from "./pages/CartPage";
+import OrderReceiptPage from "./pages/OrderReceiptPage";
 
 const queryClient = new QueryClient();
 
@@ -44,12 +46,13 @@ const App = () => (
             <Route path="/employee-login" element={<EmployeeLogin />} />
             <Route path="/access-denied" element={<AccessDenied />} />
             <Route path="/app-landing" element={<AppLanding />} />
+            <Route path="/" element={<AppLanding />} />
             <Route path="/customer-login" element={<CustomerLogin />} />
             <Route path="/customer-register" element={<CustomerRegister />} />
             
             {/* Protected routes */}
             <Route element={<ProtectedRoute resource="dashboard" action="view" />}>
-              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Index />} />
             </Route>
             
             <Route element={<ProtectedRoute resource="farmers" action="view" />}>
@@ -89,6 +92,8 @@ const App = () => (
             <Route path="/customer-home" element={<CustomerHome />} />
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/order-tracking/:id" element={<OrderTracking />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/order-receipt/:id" element={<OrderReceiptPage />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

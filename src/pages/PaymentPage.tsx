@@ -31,25 +31,13 @@ const PaymentPage = () => {
   const customerString = localStorage.getItem('currentCustomer');
   const customer = customerString ? JSON.parse(customerString) : null;
   
+  // Load cart items from localStorage
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    const savedCart = localStorage.getItem('customerCart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
   // Local state
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      productId: 'prod_1',
-      name: 'Organic Tomatoes',
-      quantity: 2,
-      pricePerUnit: 50,
-      unit: 'kg',
-      category: 'Vegetables'
-    },
-    {
-      productId: 'prod_2',
-      name: 'Fresh Potatoes',
-      quantity: 1,
-      pricePerUnit: 30,
-      unit: 'kg',
-      category: 'Vegetables'
-    }
-  ]);
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
@@ -75,6 +63,7 @@ const PaymentPage = () => {
           : item
       )
     );
+    localStorage.setItem('customerCart', JSON.stringify(cartItems));
   };
   
   const decreaseQuantity = (productId: string) => {
@@ -85,10 +74,14 @@ const PaymentPage = () => {
           : item
       )
     );
+    localStorage.setItem('customerCart', JSON.stringify(cartItems));
   };
   
   const removeItem = (productId: string) => {
     setCartItems(prev => prev.filter(item => item.productId !== productId));
+    localStorage.setItem('customerCart', JSON.stringify(
+      cartItems.filter(item => item.productId !== productId)
+    ));
   };
   
   // Calculate subtotal, taxes and total
@@ -172,6 +165,9 @@ const PaymentPage = () => {
       orders.push(order);
       localStorage.setItem('orders', JSON.stringify(orders));
       
+      // Clear cart
+      localStorage.setItem('customerCart', JSON.stringify([]));
+      
       setIsProcessing(false);
       
       // Show success message
@@ -180,8 +176,8 @@ const PaymentPage = () => {
         description: `Your order #${order.id} has been placed`
       });
       
-      // Navigate to order tracking
-      navigate(`/order-tracking/${order.id}`);
+      // Navigate to order receipt
+      navigate(`/order-receipt/${order.id}`);
     }, 2000);
   };
   
@@ -192,7 +188,7 @@ const PaymentPage = () => {
           <Button 
             variant="outline" 
             size="icon" 
-            onClick={() => navigate('/customer-home')}
+            onClick={() => navigate('/cart')}
           >
             <ArrowLeft className="h-4 w-4" />
             <span className="sr-only">Back</span>
@@ -208,7 +204,7 @@ const PaymentPage = () => {
         <Card className="mb-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>Cart Items</span>
+              <span>Order Summary</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -266,6 +262,20 @@ const PaymentPage = () => {
         
         <Card className="mb-4">
           <CardHeader>
+            <CardTitle>Shipping Address</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              <p className="font-medium">{customer.name}</p>
+              <p className="text-sm">{customer.address}</p>
+              <p className="text-sm">Pincode: {customer.pincode}</p>
+              <p className="text-sm">Phone: {customer.mobile}</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="mb-4">
+          <CardHeader>
             <CardTitle>Apply Coupon</CardTitle>
           </CardHeader>
           <CardContent>
@@ -314,7 +324,7 @@ const PaymentPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              <span>Order Summary</span>
+              <span>Payment Details</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

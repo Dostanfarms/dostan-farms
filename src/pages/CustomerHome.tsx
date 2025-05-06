@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -7,7 +7,6 @@ import {
   User, 
   List, 
   LogOut,
-  Home,
   Package
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -62,7 +61,17 @@ const CustomerHome = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(DUMMY_PRODUCTS);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  
+  // Load cart from localStorage on component mount
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    const savedCart = localStorage.getItem('customerCart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+  
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('customerCart', JSON.stringify(cart));
+  }, [cart]);
   
   // Check if customer is logged in
   const customerString = localStorage.getItem('currentCustomer');
@@ -100,7 +109,8 @@ const CustomerHome = () => {
         quantity: 1,
         pricePerUnit: product.pricePerUnit,
         unit: product.unit,
-        category: product.category
+        category: product.category,
+        farmerId: product.farmerId
       }]);
     }
     
@@ -109,6 +119,9 @@ const CustomerHome = () => {
       description: `${product.name} has been added to your cart`
     });
   };
+  
+  // Calculate total cart items
+  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
   
   return (
     <div className="min-h-screen bg-muted/30">
@@ -171,16 +184,16 @@ const CustomerHome = () => {
         </div>
         
         {/* Floating cart button */}
-        {cart.length > 0 && (
+        {cartItemCount > 0 && (
           <div className="fixed bottom-6 right-6">
             <Button 
               className="bg-agri-primary hover:bg-agri-secondary rounded-full h-14 w-14 shadow-lg"
-              onClick={() => navigate('/payment')}
+              onClick={() => navigate('/cart')}
             >
               <div className="relative">
                 <ShoppingCart className="h-6 w-6" />
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                  {cart.reduce((total, item) => total + item.quantity, 0)}
+                  {cartItemCount}
                 </span>
               </div>
             </Button>
