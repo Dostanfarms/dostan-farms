@@ -29,7 +29,8 @@ const EmployeeLogin = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/');
+        // Redirect to dashboard instead of home page
+        navigate('/dashboard');
       } else {
         toast({
           title: "Login Failed",

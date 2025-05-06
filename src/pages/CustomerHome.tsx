@@ -114,9 +114,21 @@ const CustomerHome = () => {
       }]);
     }
     
+    // Enhanced toast with Go to Cart button
     toast({
       title: "Added to Cart",
-      description: `${product.name} has been added to your cart`
+      description: `${product.name} has been added to your cart`,
+      variant: "default",
+      action: (
+        <Button 
+          onClick={() => navigate('/cart')} 
+          variant="outline" 
+          size="sm"
+          className="ml-2"
+        >
+          Go to Cart
+        </Button>
+      ),
     });
   };
   
@@ -126,7 +138,7 @@ const CustomerHome = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Top navigation bar */}
-      <header className="bg-white shadow p-4">
+      <header className="bg-white shadow p-4 sticky top-0 z-10">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Package className="h-6 w-6 text-agri-primary" />
@@ -146,6 +158,21 @@ const CustomerHome = () => {
                 <span className="sr-only">Orders</span>
               </Button>
             </Link>
+            {/* Cart icon with badge showing item count */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative"
+              onClick={() => navigate('/cart')}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
+              <span className="sr-only">Cart</span>
+            </Button>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-5 w-5" />
               <span className="sr-only">Logout</span>
@@ -182,23 +209,6 @@ const CustomerHome = () => {
             </Card>
           ))}
         </div>
-        
-        {/* Floating cart button */}
-        {cartItemCount > 0 && (
-          <div className="fixed bottom-6 right-6">
-            <Button 
-              className="bg-agri-primary hover:bg-agri-secondary rounded-full h-14 w-14 shadow-lg"
-              onClick={() => navigate('/cart')}
-            >
-              <div className="relative">
-                <ShoppingCart className="h-6 w-6" />
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                  {cartItemCount}
-                </span>
-              </div>
-            </Button>
-          </div>
-        )}
       </main>
     </div>
   );
