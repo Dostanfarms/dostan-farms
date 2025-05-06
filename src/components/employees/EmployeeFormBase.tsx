@@ -1,13 +1,14 @@
+
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Eye, EyeOff, Upload } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Role } from '@/utils/types';
 import { states, districts, villages, banks } from '@/utils/locationData';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import PhotoUploadField from '@/components/PhotoUploadField';
 
 export interface EmployeeFormData {
   name: string;
@@ -42,9 +43,6 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
   const [availableVillages, setAvailableVillages] = useState<string[]>([]);
   const [statesList] = useState<string[]>(Object.keys(states));
   const [banksList] = useState<string[]>(banks);
-  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
-    formData.profilePhoto || null
-  );
   
   useEffect(() => {
     if (formData.state) {
@@ -71,19 +69,6 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({ [name]: value });
-  };
-
-  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfilePhotoPreview(result);
-        onChange({ profilePhoto: result });
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   // Email validation function
@@ -114,33 +99,11 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
     <ScrollArea className="h-[70vh] pr-4">
       <div className="grid gap-4 py-4">
         <div className="flex justify-center mb-4">
-          <div className="text-center">
-            <Avatar className="w-24 h-24 mx-auto mb-2">
-              {profilePhotoPreview ? (
-                <AvatarImage src={profilePhotoPreview} alt={formData.name} />
-              ) : (
-                <AvatarFallback>{formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
-              )}
-            </Avatar>
-            <div className="relative">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="text-xs flex items-center"
-                onClick={() => document.getElementById('profile-photo')?.click()}
-              >
-                <Upload className="mr-1 h-3 w-3" /> Upload Photo
-              </Button>
-              <Input
-                id="profile-photo"
-                name="profilePhoto"
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePhotoChange}
-                className="hidden"
-              />
-            </div>
-          </div>
+          <PhotoUploadField 
+            value={formData.profilePhoto}
+            onChange={(value) => onChange({ profilePhoto: value })}
+            className="w-24 h-24"
+          />
         </div>
         
         <div className="grid grid-cols-2 gap-4">

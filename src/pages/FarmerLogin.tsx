@@ -10,6 +10,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { mockFarmers } from '@/utils/mockData';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import TicketDialog from '@/components/ticket/TicketDialog';
+import { Ticket } from '@/utils/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const FarmerLogin = () => {
   const [phone, setPhone] = useState('');
@@ -105,6 +108,25 @@ const FarmerLogin = () => {
     }, 1500);
   };
 
+  const handleTicketSubmit = (ticketData: Omit<Ticket, 'id'>) => {
+    // Generate a unique ID for the ticket
+    const newTicket: Ticket = {
+      ...ticketData,
+      id: uuidv4(),
+    };
+    
+    // In a real app, this would be an API call
+    // For now, save to localStorage
+    const existingTickets = JSON.parse(localStorage.getItem('tickets') || '[]');
+    const updatedTickets = [newTicket, ...existingTickets];
+    localStorage.setItem('tickets', JSON.stringify(updatedTickets));
+    
+    toast({
+      title: "Ticket Submitted",
+      description: "Your ticket has been submitted successfully. We'll get back to you soon.",
+    });
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
@@ -188,7 +210,16 @@ const FarmerLogin = () => {
             </form>
           )}
         </CardContent>
-        <CardFooter className="flex justify-center">
+        <CardFooter className="flex flex-col gap-4">
+          <div className="w-full">
+            <TicketDialog
+              userType="farmer"
+              userId="anonymous_farmer"
+              userName="Anonymous Farmer"
+              userContact={phone || "Not provided"}
+              onSubmit={handleTicketSubmit}
+            />
+          </div>
           <Button
             variant="link"
             type="button"

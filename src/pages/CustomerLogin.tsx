@@ -4,9 +4,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Package, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import TicketDialog from '@/components/ticket/TicketDialog';
+import { Ticket } from '@/utils/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const CustomerLogin = () => {
   const navigate = useNavigate();
@@ -92,6 +95,25 @@ const CustomerLogin = () => {
       }
     }, 1500);
   };
+
+  const handleTicketSubmit = (ticketData: Omit<Ticket, 'id'>) => {
+    // Generate a unique ID for the ticket
+    const newTicket: Ticket = {
+      ...ticketData,
+      id: uuidv4(),
+    };
+    
+    // In a real app, this would be an API call
+    // For now, save to localStorage
+    const existingTickets = JSON.parse(localStorage.getItem('tickets') || '[]');
+    const updatedTickets = [newTicket, ...existingTickets];
+    localStorage.setItem('tickets', JSON.stringify(updatedTickets));
+    
+    toast({
+      title: "Ticket Submitted",
+      description: "Your ticket has been submitted successfully. We'll get back to you soon.",
+    });
+  };
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
@@ -175,6 +197,15 @@ const CustomerLogin = () => {
             </div>
           </form>
         </CardContent>
+        <CardFooter className="flex justify-center">
+          <TicketDialog
+            userType="customer"
+            userId="anonymous_customer"
+            userName="Anonymous Customer"
+            userContact={mobile || "Not provided"}
+            onSubmit={handleTicketSubmit}
+          />
+        </CardFooter>
       </Card>
     </div>
   );

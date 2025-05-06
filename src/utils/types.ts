@@ -1,3 +1,4 @@
+
 export interface Farmer {
   id: string;
   name: string;
@@ -67,6 +68,7 @@ export interface Customer {
   address?: string;
   pincode?: string;
   dateJoined?: string;
+  profilePhoto?: string;
 }
 
 // Order Management types
@@ -126,4 +128,20 @@ export interface Employee {
   accountNumber?: string;
   bankName?: string;
   ifscCode?: string;
+}
+
+// Ticket system types
+export interface Ticket {
+  id: string;
+  userId: string;
+  userType: 'farmer' | 'customer';
+  userName: string;
+  userContact: string;
+  message: string;
+  status: 'pending' | 'in-review' | 'closed';
+  dateCreated: Date;
+  lastUpdated: Date;
+  attachmentUrl?: string;
+  resolution?: string;
+  assignedTo?: string;
 }

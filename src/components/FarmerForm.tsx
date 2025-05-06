@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Farmer } from '@/utils/types';
 import { mockFarmers } from '@/utils/mockData';
-import { Eye, EyeOff, Upload } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Eye, EyeOff } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { states, districts, villages, banks } from '@/utils/locationData';
+import PhotoUploadField from '@/components/PhotoUploadField';
 
 interface FarmerFormProps {
   onSubmit: (farmer: Farmer) => void;
@@ -22,7 +22,6 @@ interface FarmerFormProps {
 const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer }) => {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
-  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -59,10 +58,6 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
         district: editFarmer.district || '',
         village: editFarmer.village || ''
       });
-      
-      if (editFarmer.profilePhoto) {
-        setProfilePhotoPreview(editFarmer.profilePhoto);
-      }
       
       // Set available districts and villages if state and district are available
       if (editFarmer.state && districts[editFarmer.state]) {
@@ -107,19 +102,6 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfilePhotoPreview(result);
-        setFormData(prev => ({ ...prev, profilePhoto: result }));
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const togglePasswordVisibility = () => {
@@ -206,33 +188,10 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ onSubmit, onCancel, editFarmer 
         <ScrollArea className="h-[65vh]">
           <CardContent className="space-y-4">
             <div className="flex justify-center mb-4">
-              <div className="text-center">
-                <Avatar className="w-24 h-24 mx-auto mb-2">
-                  {profilePhotoPreview ? (
-                    <AvatarImage src={profilePhotoPreview} alt={formData.name} />
-                  ) : (
-                    <AvatarFallback>{formData.name.charAt(0)}</AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="relative">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="text-xs flex items-center"
-                    onClick={() => document.getElementById('profile-photo')?.click()}
-                  >
-                    <Upload className="mr-1 h-3 w-3" /> Upload Photo
-                  </Button>
-                  <Input
-                    id="profile-photo"
-                    name="profilePhoto"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePhotoChange}
-                    className="hidden"
-                  />
-                </div>
-              </div>
+              <PhotoUploadField
+                value={formData.profilePhoto}
+                onChange={(value) => setFormData(prev => ({ ...prev, profilePhoto: value }))}
+              />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
