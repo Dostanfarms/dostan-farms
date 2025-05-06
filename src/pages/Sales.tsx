@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,14 +90,15 @@ const Sales = () => {
       updatedCart[existingItemIndex].quantity += quantityToAdd;
       setCart(updatedCart);
     } else {
-      // Add new product to cart
+      // Add new product to cart, including the farmerId property
       setCart([...cart, {
         productId: selectedProduct.id,
         name: selectedProduct.name,
         quantity: quantityToAdd,
         pricePerUnit: selectedProduct.pricePerUnit,
         unit: selectedProduct.unit,
-        category: selectedProduct.category
+        category: selectedProduct.category,
+        farmerId: selectedProduct.farmerId // Include farmerId from selected product
       }]);
     }
     
