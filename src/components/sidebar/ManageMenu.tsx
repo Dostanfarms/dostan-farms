@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   SidebarGroup, 
@@ -28,6 +28,14 @@ const ManageMenu = () => {
   const { currentUser } = useAuth();
   const [manageOpen, setManageOpen] = useState(false);
 
+  // Open the manage menu if current location is under any manage item
+  useEffect(() => {
+    const managePathsToCheck = ['/products', '/sales', '/transactions', '/coupons', '/employees', '/roles'];
+    if (managePathsToCheck.some(path => location.pathname.startsWith(path))) {
+      setManageOpen(true);
+    }
+  }, [location.pathname]);
+
   // Items in the "Manage" section
   const manageItems = [
     {
@@ -47,12 +55,6 @@ const ManageMenu = () => {
       icon: <Receipt className="h-5 w-5" />,
       path: '/transactions',
       resource: 'transactions'
-    },
-    {
-      title: 'Settlements',
-      icon: <DollarSign className="h-5 w-5" />,
-      path: '/settlements',
-      resource: 'settlements'
     },
     {
       title: 'Coupons',

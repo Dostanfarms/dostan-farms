@@ -1,3 +1,4 @@
+
 export interface Farmer {
   id: string;
   name: string;
@@ -73,7 +74,7 @@ export interface Coupon {
   expiryDate: Date;
 }
 
-// Role-based access control types
+// Role-based access control types - now a string to allow for custom roles
 export type Role = string;
 
 export interface Permission {

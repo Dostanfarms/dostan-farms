@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Eye, EyeOff, Upload } from 'lucide-react';
 import { Role } from '@/utils/types';
 import { states, districts, villages, banks } from '@/utils/locationData';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface EmployeeFormData {
   name: string;
@@ -111,244 +111,248 @@ const EmployeeFormBase: React.FC<EmployeeFormBaseProps> = ({
   };
 
   return (
-    <div className="grid gap-4 py-4">
-      <div className="flex justify-center mb-4">
-        <div className="text-center">
-          <Avatar className="w-24 h-24 mx-auto mb-2">
-            {profilePhotoPreview ? (
-              <AvatarImage src={profilePhotoPreview} alt={formData.name} />
-            ) : (
-              <AvatarFallback>{formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
-            )}
-          </Avatar>
-          <div className="relative">
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="text-xs flex items-center"
-              onClick={() => document.getElementById('profile-photo')?.click()}
-            >
-              <Upload className="mr-1 h-3 w-3" /> Upload Photo
-            </Button>
-            <Input
-              id="profile-photo"
-              name="profilePhoto"
-              type="file"
-              accept="image/*"
-              onChange={handleProfilePhotoChange}
-              className="hidden"
-            />
+    <ScrollArea className="h-[70vh] pr-4">
+      <div className="grid gap-4 py-4">
+        <div className="flex justify-center mb-4">
+          <div className="text-center">
+            <Avatar className="w-24 h-24 mx-auto mb-2">
+              {profilePhotoPreview ? (
+                <AvatarImage src={profilePhotoPreview} alt={formData.name} />
+              ) : (
+                <AvatarFallback>{formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+              )}
+            </Avatar>
+            <div className="relative">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="text-xs flex items-center"
+                onClick={() => document.getElementById('profile-photo')?.click()}
+              >
+                <Upload className="mr-1 h-3 w-3" /> Upload Photo
+              </Button>
+              <Input
+                id="profile-photo"
+                name="profilePhoto"
+                type="file"
+                accept="image/*"
+                onChange={handleProfilePhotoChange}
+                className="hidden"
+              />
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            name="name"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="role">Role</Label>
-          <Select 
-            value={formData.role} 
-            onValueChange={(value) => onChange({ role: value as Role })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="sales">Sales</SelectItem>
-              <SelectItem value="accountant">Accountant</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Email address"
-          value={formData.email}
-          onChange={handleInputChange}
-          required
-          className={formData.email && !validateEmail(formData.email) ? "border-red-500" : ""}
-        />
-        {formData.email && !validateEmail(formData.email) && 
-          <p className="text-xs text-red-500">Please enter a valid email address</p>
-        }
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            placeholder="Phone number"
-            value={formData.phone}
-            onChange={handleInputChange}
-            required
-            className={formData.phone && !validatePhone(formData.phone) ? "border-red-500" : ""}
-          />
-          {formData.phone && !validatePhone(formData.phone) && 
-            <p className="text-xs text-red-500">Please enter a valid 10-digit mobile number</p>
-          }
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Input 
-              id="password" 
-              name="password" 
-              type={showPassword ? "text" : "password"}
-              placeholder="Set password" 
-              value={formData.password}
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="Full Name"
+              value={formData.name}
               onChange={handleInputChange}
               required
             />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0 h-full px-3"
-              onClick={togglePasswordVisibility}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select 
+              value={formData.role} 
+              onValueChange={(value) => onChange({ role: value as Role })}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="sales">Sales</SelectItem>
+                <SelectItem value="accountant">Accountant</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </div>
-      
-      {/* Bank Account Details */}
-      <div className="border-t pt-4 mt-2">
-        <h3 className="font-medium mb-3">Bank Account Details</h3>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Email address"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+            className={formData.email && !validateEmail(formData.email) ? "border-red-500" : ""}
+          />
+          {formData.email && !validateEmail(formData.email) && 
+            <p className="text-xs text-red-500">Please enter a valid email address</p>
+          }
+        </div>
+        
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="accountHolderName">Account Holder Name</Label>
+            <Label htmlFor="phone">Phone</Label>
             <Input
-              id="accountHolderName"
-              name="accountHolderName"
-              placeholder="Account holder name"
-              value={formData.accountHolderName}
+              id="phone"
+              name="phone"
+              type="tel"
+              placeholder="Phone number"
+              value={formData.phone}
               onChange={handleInputChange}
+              required
+              className={formData.phone && !validatePhone(formData.phone) ? "border-red-500" : ""}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="bankName">Bank Name</Label>
-            <Select 
-              value={formData.bankName} 
-              onValueChange={(value) => onChange({ bankName: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select bank" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
-                {banksList.map(bank => (
-                  <SelectItem key={bank} value={bank}>{bank}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="accountNumber">Account Number</Label>
-            <Input
-              id="accountNumber"
-              name="accountNumber"
-              placeholder="Account number"
-              value={formData.accountNumber}
-              onChange={handleInputChange}
-              className={formData.accountNumber && !validateAccountNumber(formData.accountNumber) ? "border-red-500" : ""}
-            />
-            {formData.accountNumber && !validateAccountNumber(formData.accountNumber) && 
-              <p className="text-xs text-red-500">Account number should be 9-18 digits</p>
+            {formData.phone && !validatePhone(formData.phone) && 
+              <p className="text-xs text-red-500">Please enter a valid 10-digit mobile number</p>
             }
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ifscCode">IFSC Code</Label>
-            <Input
-              id="ifscCode"
-              name="ifscCode"
-              placeholder="IFSC code"
-              value={formData.ifscCode}
-              onChange={handleInputChange}
-              className={formData.ifscCode && !validateIFSC(formData.ifscCode) ? "border-red-500" : ""}
-            />
-            {formData.ifscCode && !validateIFSC(formData.ifscCode) && 
-              <p className="text-xs text-red-500">Please enter a valid IFSC code</p>
-            }
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input 
+                id="password" 
+                name="password" 
+                type={showPassword ? "text" : "password"}
+                placeholder="Set password" 
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full px-3"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Location fields */}
-      <div className="border-t pt-4 mt-2">
-        <h3 className="font-medium mb-3">Location Details</h3>
-        <div className="space-y-2">
-          <Label htmlFor="state">State</Label>
-          <Select 
-            value={formData.state} 
-            onValueChange={(value) => onChange({ state: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select state" />
-            </SelectTrigger>
-            <SelectContent className="max-h-[200px]">
-              {statesList.map(state => (
-                <SelectItem key={state} value={state}>{state}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        
+        {/* Bank Account Details */}
+        <div className="border-t pt-4 mt-2">
+          <h3 className="font-medium mb-3">Bank Account Details</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="accountHolderName">Account Holder Name</Label>
+              <Input
+                id="accountHolderName"
+                name="accountHolderName"
+                placeholder="Account holder name"
+                value={formData.accountHolderName}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Select 
+                value={formData.bankName} 
+                onValueChange={(value) => onChange({ bankName: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select bank" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  {banksList.map(bank => (
+                    <SelectItem key={bank} value={bank}>{bank}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accountNumber">Account Number</Label>
+              <Input
+                id="accountNumber"
+                name="accountNumber"
+                placeholder="Account number"
+                value={formData.accountNumber}
+                onChange={handleInputChange}
+                className={formData.accountNumber && !validateAccountNumber(formData.accountNumber) ? "border-red-500" : ""}
+              />
+              {formData.accountNumber && !validateAccountNumber(formData.accountNumber) && 
+                <p className="text-xs text-red-500">Account number should be 9-18 digits</p>
+              }
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ifscCode">IFSC Code</Label>
+              <Input
+                id="ifscCode"
+                name="ifscCode"
+                placeholder="IFSC code"
+                value={formData.ifscCode}
+                onChange={handleInputChange}
+                className={formData.ifscCode && !validateIFSC(formData.ifscCode) ? "border-red-500" : ""}
+              />
+              {formData.ifscCode && !validateIFSC(formData.ifscCode) && 
+                <p className="text-xs text-red-500">Please enter a valid IFSC code</p>
+              }
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 mt-4">
+        
+        {/* Location fields */}
+        <div className="border-t pt-4 mt-2">
+          <h3 className="font-medium mb-3">Location Details</h3>
           <div className="space-y-2">
-            <Label htmlFor="district">District</Label>
+            <Label htmlFor="state">State</Label>
             <Select 
-              value={formData.district} 
-              onValueChange={(value) => onChange({ district: value })}
-              disabled={!formData.state || availableDistricts.length === 0}
+              value={formData.state} 
+              onValueChange={(value) => onChange({ state: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select district" />
+                <SelectValue placeholder="Select state" />
               </SelectTrigger>
               <SelectContent className="max-h-[200px]">
-                {availableDistricts.map(district => (
-                  <SelectItem key={district} value={district}>{district}</SelectItem>
+                {statesList.map(state => (
+                  <SelectItem key={state} value={state}>{state}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="village">Village</Label>
-            <Select 
-              value={formData.village} 
-              onValueChange={(value) => onChange({ village: value })}
-              disabled={!formData.district || availableVillages.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select village" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
-                {availableVillages.map(village => (
-                  <SelectItem key={village} value={village}>{village}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="district">District</Label>
+              <Select 
+                value={formData.district} 
+                onValueChange={(value) => onChange({ district: value })}
+                disabled={!formData.state || availableDistricts.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select district" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  {availableDistricts.map(district => (
+                    <SelectItem key={district} value={district}>{district}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="village">Village</Label>
+              <Select 
+                value={formData.village} 
+                onValueChange={(value) => onChange({ village: value })}
+                disabled={!formData.district || availableVillages.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select village" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  {availableVillages.map(village => (
+                    <SelectItem key={village} value={village}>{village}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 };
 
