@@ -24,7 +24,7 @@ export const Sidebar = () => {
     }
   };
 
-  const SidebarContent = () => (
+  const SidebarContentComponent = () => (
     <>
       <SidebarHeader className="py-6">
         <div className="flex items-center px-4 gap-2">
@@ -43,14 +43,12 @@ export const Sidebar = () => {
   return (
     <SidebarContainer>
       {isInsideRouter() ? (
-        <SidebarContent />
+        <SidebarContentComponent />
       ) : (
         <BrowserRouter>
-          <SidebarContent />
+          <SidebarContentComponent />
         </BrowserRouter>
       )}
     </SidebarContainer>
   );
 };
-
-// Import Package icon which was used in the original component
