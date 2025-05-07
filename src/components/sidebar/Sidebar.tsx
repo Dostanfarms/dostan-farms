@@ -10,7 +10,7 @@ import {
 import TopLevelMenu from './TopLevelMenu';
 import ManageMenu from './ManageMenu';
 import UserSection from './UserSection';
-import { Package } from 'lucide-react';
+import { Package, Menu } from 'lucide-react';
 
 export const Sidebar = () => {
   const { state } = useSidebar();
@@ -25,7 +25,9 @@ export const Sidebar = () => {
               <Package className="h-6 w-6 text-agri-primary" />
               <span className="text-lg font-bold">AgriPay Admin</span>
             </div>
-            <SidebarTrigger />
+            <SidebarTrigger>
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -38,7 +40,9 @@ export const Sidebar = () => {
       {/* This is the floating toggle button that appears when sidebar is collapsed */}
       {state === 'collapsed' && (
         <div className="fixed z-50 top-4 left-4">
-          <SidebarTrigger className="bg-white shadow-md border rounded-md" />
+          <SidebarTrigger className="bg-white shadow-md border rounded-md p-2">
+            <Menu className="h-5 w-5" />
+          </SidebarTrigger>
         </div>
       )}
     </>

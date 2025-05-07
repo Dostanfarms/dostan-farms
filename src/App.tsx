@@ -30,6 +30,7 @@ import PaymentPage from "./pages/PaymentPage";
 import OrderTracking from "./pages/OrderTracking";
 import CartPage from "./pages/CartPage";
 import OrderReceiptPage from "./pages/OrderReceiptPage";
+import Tickets from "./pages/Tickets";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,9 @@ const App = () => (
             <Route element={<ProtectedRoute resource="roles" action="view" />}>
               <Route path="/roles" element={<Roles />} />
             </Route>
+            
+            {/* Added route for tickets */}
+            <Route path="/tickets" element={<Tickets />} />
             
             {/* Farmer dashboard - separate auth system */}
             <Route path="/farmer-dashboard/:id" element={<FarmerDashboard />} />

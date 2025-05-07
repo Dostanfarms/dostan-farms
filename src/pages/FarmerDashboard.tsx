@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import TransactionHistory from '@/components/TransactionHistory';
-import { Farmer } from '@/utils/types';
+import { Farmer, Ticket } from '@/utils/types';
 import { mockFarmers, getDailyEarnings, getMonthlyEarnings, getUnsettledAmount } from '@/utils/mockData';
 import { format } from 'date-fns';
-import { LogOut, User, Package, Receipt } from 'lucide-react';
+import { LogOut, Package, Receipt, Ticket as TicketIcon } from 'lucide-react';
+import TicketDialog from '@/components/ticket/TicketDialog';
 
 const FarmerDashboard = () => {
   const { id } = useParams<{ id: string }>();
@@ -72,6 +73,16 @@ const FarmerDashboard = () => {
     });
     navigate('/farmer-login');
   };
+  
+  const handleTicketSubmit = (ticket: Omit<Ticket, 'id'>) => {
+    // In a real app, this would submit the ticket to an API
+    // For now, we'll just show a toast
+    toast({
+      title: "Ticket Submitted",
+      description: "Your support ticket has been submitted.",
+      variant: "default",
+    });
+  };
 
   if (!farmer) {
     return (
@@ -90,6 +101,14 @@ const FarmerDashboard = () => {
             <span className="text-lg font-bold">AgriPay Farmer Portal</span>
           </div>
           <div className="flex items-center gap-4">
+            <TicketDialog
+              userType="farmer"
+              userId={farmer.id}
+              userName={farmer.name}
+              userContact={farmer.phone}
+              onSubmit={handleTicketSubmit}
+              buttonText="Raise a Ticket"
+            />
             <div className="text-right">
               <p className="font-medium">{farmer.name}</p>
               <p className="text-sm text-muted-foreground">Farmer ID: {farmer.id}</p>

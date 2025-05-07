@@ -4,14 +4,24 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   ShoppingCart, 
-  User, 
-  List, 
+  User,
   LogOut,
-  Package
+  Package,
+  List,
+  Ticket
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Product, CartItem } from '@/utils/types';
+import TicketDialog from '@/components/ticket/TicketDialog';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 // Placeholder products data
 const DUMMY_PRODUCTS: Product[] = [
@@ -132,8 +142,26 @@ const CustomerHome = () => {
     });
   };
   
+  const handleTicketSubmit = (ticket: Omit<Ticket, 'id'>) => {
+    // In a real app, this would submit the ticket to an API
+    // For now, we'll just show a toast
+    toast({
+      title: "Ticket Submitted",
+      description: "Your support ticket has been submitted.",
+      variant: "default",
+    });
+  };
+  
   // Calculate total cart items
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
   
   return (
     <div className="min-h-screen bg-muted/30">
@@ -146,18 +174,35 @@ const CustomerHome = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Link to="/customer-profile">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-                <span className="sr-only">Profile</span>
-              </Button>
-            </Link>
-            <Link to="/order-history">
-              <Button variant="ghost" size="icon">
-                <List className="h-5 w-5" />
-                <span className="sr-only">Orders</span>
-              </Button>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{getInitials(customer.name)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/customer-profile" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/order-history" className="flex items-center gap-2">
+                    <List className="h-4 w-4" />
+                    <span>My Orders</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             {/* Cart icon with badge showing item count */}
             <Button 
               variant="ghost" 
@@ -173,16 +218,24 @@ const CustomerHome = () => {
               )}
               <span className="sr-only">Cart</span>
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
-              <span className="sr-only">Logout</span>
-            </Button>
           </div>
         </div>
       </header>
       
       <main className="container mx-auto py-6 px-4">
-        <h1 className="text-2xl font-bold mb-6">Available Products</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Available Products</h1>
+          
+          {/* Raise a Ticket button - only visible when logged in */}
+          <TicketDialog
+            userType="customer"
+            userId={customer.id}
+            userName={customer.name}
+            userContact={customer.phone || ""}
+            onSubmit={handleTicketSubmit}
+            buttonText="Raise a Ticket"
+          />
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {products.map((product) => (
