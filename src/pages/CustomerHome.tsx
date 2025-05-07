@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Product, CartItem } from '@/utils/types';
+import { Product, CartItem, Ticket as TicketType } from '@/utils/types';
 import TicketDialog from '@/components/ticket/TicketDialog';
 import { 
   DropdownMenu,
@@ -142,7 +141,7 @@ const CustomerHome = () => {
     });
   };
   
-  const handleTicketSubmit = (ticket: Omit<Ticket, 'id'>) => {
+  const handleTicketSubmit = (ticket: Omit<TicketType, 'id'>) => {
     // In a real app, this would submit the ticket to an API
     // For now, we'll just show a toast
     toast({
