@@ -17,7 +17,8 @@ import {
   ShoppingCart, 
   Settings,
   UserCog,
-  Tag
+  Tag,
+  Ticket
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
@@ -30,7 +31,7 @@ const ManageMenu = () => {
 
   // Open the manage menu if current location is under any manage item
   useEffect(() => {
-    const managePathsToCheck = ['/products', '/sales', '/transactions', '/coupons', '/employees', '/roles'];
+    const managePathsToCheck = ['/products', '/sales', '/transactions', '/coupons', '/employees', '/roles', '/tickets'];
     if (managePathsToCheck.some(path => location.pathname.startsWith(path))) {
       setManageOpen(true);
     }
@@ -61,6 +62,12 @@ const ManageMenu = () => {
       icon: <Tag className="h-5 w-5" />,
       path: '/coupons',
       resource: 'coupons'
+    },
+    {
+      title: 'Tickets',
+      icon: <Ticket className="h-5 w-5" />,
+      path: '/tickets',
+      resource: 'tickets'
     },
     {
       title: 'Employees',

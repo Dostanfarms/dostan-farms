@@ -53,7 +53,9 @@ export const rolePermissions: RolePermission[] = [
       { resource: 'transactions', actions: ['view', 'create', 'edit', 'delete'] },
       { resource: 'settlements', actions: ['view', 'create', 'edit', 'delete'] },
       { resource: 'employees', actions: ['view', 'create', 'edit', 'delete'] },
-      { resource: 'roles', actions: ['view', 'create', 'edit', 'delete'] }
+      { resource: 'roles', actions: ['view', 'create', 'edit', 'delete'] },
+      { resource: 'coupons', actions: ['view', 'create', 'edit', 'delete'] },
+      { resource: 'tickets', actions: ['view', 'create', 'edit', 'delete'] }
     ]
   },
   {
@@ -66,7 +68,9 @@ export const rolePermissions: RolePermission[] = [
       { resource: 'transactions', actions: ['view'] },
       { resource: 'settlements', actions: ['view', 'create'] },
       { resource: 'employees', actions: ['view'] },
-      { resource: 'roles', actions: ['view'] }
+      { resource: 'roles', actions: ['view'] },
+      { resource: 'coupons', actions: ['view', 'create', 'edit'] },
+      { resource: 'tickets', actions: ['view', 'create'] }
     ]
   },
   {
@@ -79,7 +83,9 @@ export const rolePermissions: RolePermission[] = [
       { resource: 'transactions', actions: [] },
       { resource: 'settlements', actions: [] },
       { resource: 'employees', actions: [] },
-      { resource: 'roles', actions: [] }
+      { resource: 'roles', actions: [] },
+      { resource: 'coupons', actions: ['view', 'create'] },
+      { resource: 'tickets', actions: ['view', 'create'] }
     ]
   },
   {
@@ -92,7 +98,9 @@ export const rolePermissions: RolePermission[] = [
       { resource: 'transactions', actions: ['view', 'create', 'edit'] },
       { resource: 'settlements', actions: ['view', 'create', 'edit'] },
       { resource: 'employees', actions: [] },
-      { resource: 'roles', actions: [] }
+      { resource: 'roles', actions: [] },
+      { resource: 'coupons', actions: ['view'] },
+      { resource: 'tickets', actions: ['view'] }
     ]
   }
 ];
