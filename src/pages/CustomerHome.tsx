@@ -8,12 +8,13 @@ import {
   LogOut,
   Package,
   List,
-  Menu
+  Menu,
+  ArrowLeft,
+  Ticket
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Product, CartItem, Ticket as TicketType } from '@/utils/types';
-import TicketDialog from '@/components/ticket/TicketDialog';
+import { Product, CartItem } from '@/utils/types';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +73,7 @@ const CustomerHome = () => {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(DUMMY_PRODUCTS);
   const [addedToCartIds, setAddedToCartIds] = useState<{[key: string]: boolean}>({});
+  const [menuOpen, setMenuOpen] = useState(false);
   
   // Load cart from localStorage on component mount
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -88,9 +90,14 @@ const CustomerHome = () => {
   const customerString = localStorage.getItem('currentCustomer');
   const customer = customerString ? JSON.parse(customerString) : null;
   
+  useEffect(() => {
+    if (!customer) {
+      navigate('/customer-login');
+    }
+  }, [customer, navigate]);
+  
   if (!customer) {
-    navigate('/customer-login');
-    return null;
+    return null; // Redirect handled in useEffect
   }
   
   const handleLogout = () => {
@@ -134,16 +141,6 @@ const CustomerHome = () => {
     }, 2000);
   };
   
-  const handleTicketSubmit = (ticket: Omit<TicketType, 'id'>) => {
-    // In a real app, this would submit the ticket to an API
-    // For now, we'll just show a toast
-    toast({
-      title: "Ticket Submitted",
-      description: "Your support ticket has been submitted.",
-      variant: "default",
-    });
-  };
-  
   // Calculate total cart items
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
   
@@ -154,8 +151,6 @@ const CustomerHome = () => {
       .join('')
       .toUpperCase();
   };
-
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -170,6 +165,13 @@ const CustomerHome = () => {
               onClick={() => setMenuOpen(!menuOpen)}
             >
               <Menu className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <Package className="h-6 w-6 text-agri-primary" />
             <span className="text-xl font-bold hidden sm:inline">AgriPay</span>
@@ -199,21 +201,9 @@ const CustomerHome = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/ticket-history" className="flex items-center gap-2">
-                    <Menu className="h-4 w-4" />
+                    <Ticket className="h-4 w-4" />
                     <span>Ticket History</span>
                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <div className="w-full">
-                    <TicketDialog
-                      userType="customer"
-                      userId={customer.id}
-                      userName={customer.name}
-                      userContact={customer.phone || ""}
-                      onSubmit={handleTicketSubmit}
-                      buttonText="Raise a Ticket"
-                    />
-                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
@@ -241,6 +231,64 @@ const CustomerHome = () => {
           </div>
         </div>
       </header>
+      
+      {/* Mobile sidebar */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div 
+            className="fixed inset-0 bg-black/50" 
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="fixed top-0 left-0 bottom-0 w-64 bg-white shadow-lg p-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b pb-4">
+                <Package className="h-6 w-6 text-agri-primary" />
+                <span className="text-lg font-bold">AgriPay</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="ml-auto"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </div>
+              <Link to="/customer-profile" className="flex items-center gap-2 py-2" onClick={() => setMenuOpen(false)}>
+                <User className="h-5 w-5" />
+                <span>Profile</span>
+              </Link>
+              <Link to="/order-history" className="flex items-center gap-2 py-2" onClick={() => setMenuOpen(false)}>
+                <List className="h-5 w-5" />
+                <span>My Orders</span>
+              </Link>
+              <Link to="/ticket-history" className="flex items-center gap-2 py-2" onClick={() => setMenuOpen(false)}>
+                <Ticket className="h-5 w-5" />
+                <span>Ticket History</span>
+              </Link>
+              <Link to="/cart" className="flex items-center gap-2 py-2" onClick={() => setMenuOpen(false)}>
+                <ShoppingCart className="h-5 w-5" />
+                <span>Cart</span>
+                {cartItemCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-auto">
+                    {cartItemCount}
+                  </span>
+                )}
+              </Link>
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2 justify-start mt-auto"
+                onClick={() => {
+                  handleLogout();
+                  setMenuOpen(false);
+                }}
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <main className="container mx-auto py-6 px-4">
         <div className="flex justify-between items-center mb-6">

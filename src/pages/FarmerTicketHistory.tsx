@@ -8,9 +8,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Ticket } from '@/utils/types';
 import TicketDialog from '@/components/ticket/TicketDialog';
-import { Package, ChevronLeft, LogOut } from 'lucide-react';
-import { mockFarmers } from '@/utils/mockData';
-import { Link } from 'react-router-dom';
+import { Package, ChevronLeft, LogOut, Menu } from 'lucide-react';
 
 const FarmerTicketHistory = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +16,7 @@ const FarmerTicketHistory = () => {
   const { toast } = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [farmer, setFarmer] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     // Check if farmer is logged in
@@ -118,6 +117,14 @@ const FarmerTicketHistory = () => {
           <div className="flex items-center gap-2">
             <Button 
               variant="ghost" 
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
               size="icon" 
               onClick={() => navigate(`/farmer-dashboard/${id}`)}
             >
@@ -142,6 +149,54 @@ const FarmerTicketHistory = () => {
           </div>
         </div>
       </header>
+      
+      {/* Mobile sidebar */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div 
+            className="fixed inset-0 bg-black/50" 
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="fixed top-0 left-0 bottom-0 w-64 bg-white shadow-lg p-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b pb-4">
+                <Package className="h-6 w-6 text-agri-primary" />
+                <span className="text-lg font-bold">AgriPay Farmer</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="ml-auto"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                className="flex items-center justify-start gap-2"
+                onClick={() => {
+                  navigate(`/farmer-dashboard/${id}`);
+                  setMenuOpen(false);
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Back to Dashboard</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2 justify-start mt-auto"
+                onClick={() => {
+                  handleLogout();
+                  setMenuOpen(false);
+                }}
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
