@@ -1,15 +1,10 @@
 
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
 import { Sidebar as SidebarComponent } from './sidebar/Sidebar';
 
-// This wrapper ensures the Sidebar always has Router context
+// This wrapper component now simply renders the Sidebar without adding a Router context
 const Sidebar = () => {
-  return (
-    <BrowserRouter>
-      <SidebarComponent />
-    </BrowserRouter>
-  );
+  return <SidebarComponent />;
 };
 
 export default Sidebar;
