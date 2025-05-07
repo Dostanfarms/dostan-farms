@@ -8,10 +8,24 @@ import {
 import TopLevelMenu from './TopLevelMenu';
 import ManageMenu from './ManageMenu';
 import UserSection from './UserSection';
+import { BrowserRouter } from 'react-router-dom';
+import { Package } from 'lucide-react';
 
 export const Sidebar = () => {
-  return (
-    <SidebarContainer>
+  // Check if we're already in a Router context
+  // This is a simple approach - in a real app you might want to use a more robust solution
+  const isInsideRouter = () => {
+    try {
+      // This will throw if not in a Router context
+      require('react-router-dom').useLocation();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const SidebarContent = () => (
+    <>
       <SidebarHeader className="py-6">
         <div className="flex items-center px-4 gap-2">
           <Package className="h-6 w-6 text-agri-primary" />
@@ -23,9 +37,20 @@ export const Sidebar = () => {
         <ManageMenu />
         <UserSection />
       </SidebarContent>
+    </>
+  );
+
+  return (
+    <SidebarContainer>
+      {isInsideRouter() ? (
+        <SidebarContent />
+      ) : (
+        <BrowserRouter>
+          <SidebarContent />
+        </BrowserRouter>
+      )}
     </SidebarContainer>
   );
 };
 
 // Import Package icon which was used in the original component
-import { Package } from 'lucide-react';
