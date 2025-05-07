@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { File, Eye } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TicketManagementProps {
   tickets: Ticket[];
@@ -73,7 +74,7 @@ const TicketManagement: React.FC<TicketManagementProps> = ({ tickets, onUpdateTi
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Support Tickets</h2>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -94,33 +95,36 @@ const TicketManagement: React.FC<TicketManagementProps> = ({ tickets, onUpdateTi
           No tickets found
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
+                <TableHead className="w-[100px]">Ticket ID</TableHead>
+                <TableHead className="w-[100px]">Date</TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Message</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTickets.map((ticket) => (
                 <TableRow key={ticket.id}>
+                  <TableCell className="font-medium">#{ticket.id}</TableCell>
                   <TableCell>{format(new Date(ticket.dateCreated), 'dd MMM yyyy')}</TableCell>
                   <TableCell>{ticket.userName}</TableCell>
                   <TableCell className="capitalize">{ticket.userType}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{ticket.message}</TableCell>
                   <TableCell>{getStatusBadge(ticket.status)}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <Button 
-                      variant="ghost" 
+                      variant="outline" 
                       size="sm" 
                       onClick={() => openTicketDetails(ticket)}
+                      className="gap-1"
                     >
-                      <Eye className="h-4 w-4 mr-1" />
+                      <Eye className="h-4 w-4" />
                       View
                     </Button>
                   </TableCell>
@@ -134,81 +138,84 @@ const TicketManagement: React.FC<TicketManagementProps> = ({ tickets, onUpdateTi
       {/* Ticket details dialog */}
       {selectedTicket && (
         <Dialog open={!!selectedTicket} onOpenChange={(open) => !open && setSelectedTicket(null)}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Ticket Details</DialogTitle>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">User</Label>
-                  <p className="font-medium">{selectedTicket.userName}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Contact</Label>
-                  <p className="font-medium">{selectedTicket.userContact}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Type</Label>
-                  <p className="font-medium capitalize">{selectedTicket.userType}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Date Created</Label>
-                  <p className="font-medium">
-                    {format(new Date(selectedTicket.dateCreated), 'dd MMM yyyy, HH:mm')}
-                  </p>
-                </div>
-              </div>
+          <DialogContent className="sm:max-w-lg max-h-[90vh]">
+            <ScrollArea className="max-h-[80vh] pr-4">
+              <DialogHeader>
+                <DialogTitle>Ticket #{selectedTicket.id}</DialogTitle>
+              </DialogHeader>
               
-              <div>
-                <Label className="text-muted-foreground">Message</Label>
-                <div className="mt-1 p-3 bg-muted rounded-md">
-                  <p>{selectedTicket.message}</p>
-                </div>
-              </div>
-              
-              {selectedTicket.attachmentUrl && (
-                <div>
-                  <Label className="text-muted-foreground">Attachment</Label>
-                  <div className="mt-1 p-3 bg-muted rounded-md flex items-center">
-                    <File className="h-4 w-4 mr-2" />
-                    <a 
-                      href={selectedTicket.attachmentUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      View Attachment
-                    </a>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">User</Label>
+                    <p className="font-medium">{selectedTicket.userName}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Contact</Label>
+                    <p className="font-medium">{selectedTicket.userContact}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Type</Label>
+                    <p className="font-medium capitalize">{selectedTicket.userType}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Date Created</Label>
+                    <p className="font-medium">
+                      {format(new Date(selectedTicket.dateCreated), 'dd MMM yyyy, HH:mm')}
+                    </p>
                   </div>
                 </div>
-              )}
-              
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select value={newStatus} onValueChange={(value) => setNewStatus(value as Ticket['status'])}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in-review">In Review</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                  </SelectContent>
-                </Select>
+                
+                <div>
+                  <Label className="text-muted-foreground">Message</Label>
+                  <div className="mt-1 p-3 bg-muted rounded-md">
+                    <p>{selectedTicket.message}</p>
+                  </div>
+                </div>
+                
+                {selectedTicket.attachmentUrl && (
+                  <div>
+                    <Label className="text-muted-foreground">Attachment</Label>
+                    <div className="mt-1 p-3 bg-muted rounded-md flex items-center">
+                      <File className="h-4 w-4 mr-2" />
+                      <a 
+                        href={selectedTicket.attachmentUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Attachment
+                      </a>
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={newStatus} onValueChange={(value) => setNewStatus(value as Ticket['status'])}>
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in-review">In Review</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="resolution">Resolution / Comments</Label>
+                  <Textarea 
+                    id="resolution" 
+                    placeholder="Add resolution details or comments..." 
+                    value={resolution}
+                    onChange={(e) => setResolution(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
               </div>
-              
-              <div>
-                <Label htmlFor="resolution">Resolution / Comments</Label>
-                <Textarea 
-                  id="resolution" 
-                  placeholder="Add resolution details or comments..." 
-                  value={resolution}
-                  onChange={(e) => setResolution(e.target.value)}
-                />
-              </div>
-            </div>
+            </ScrollArea>
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedTicket(null)}>
