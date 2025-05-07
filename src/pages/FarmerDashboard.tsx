@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,8 +8,22 @@ import TransactionHistory from '@/components/TransactionHistory';
 import { Farmer, Ticket } from '@/utils/types';
 import { mockFarmers, getDailyEarnings, getMonthlyEarnings, getUnsettledAmount } from '@/utils/mockData';
 import { format } from 'date-fns';
-import { LogOut, Package, Receipt, Ticket as TicketIcon } from 'lucide-react';
+import { 
+  LogOut, 
+  Package, 
+  Receipt, 
+  Menu as TicketIcon, 
+  Menu,
+  ChevronDown
+} from 'lucide-react';
 import TicketDialog from '@/components/ticket/TicketDialog';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 const FarmerDashboard = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +34,7 @@ const FarmerDashboard = () => {
   const [dailyEarnings, setDailyEarnings] = useState([]);
   const [monthlyEarnings, setMonthlyEarnings] = useState([]);
   const [unsettledAmount, setUnsettledAmount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Check if farmer is logged in
@@ -97,35 +111,96 @@ const FarmerDashboard = () => {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
             <Package className="h-6 w-6 text-agri-primary" />
-            <span className="text-lg font-bold">AgriPay Farmer Portal</span>
+            <span className="text-lg font-bold hidden sm:inline">AgriPay Farmer Portal</span>
           </div>
           <div className="flex items-center gap-4">
-            <TicketDialog
-              userType="farmer"
-              userId={farmer.id}
-              userName={farmer.name}
-              userContact={farmer.phone}
-              onSubmit={handleTicketSubmit}
-              buttonText="Raise a Ticket"
-            />
-            <div className="text-right">
-              <p className="font-medium">{farmer.name}</p>
-              <p className="text-sm text-muted-foreground">Farmer ID: {farmer.id}</p>
-            </div>
-            <Button 
-              variant="outline"
-              onClick={handleLogout}
-              className="flex items-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <span className="hidden sm:inline">{farmer.name}</span>
+                  <span className="sm:hidden">Account</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <p className="font-medium">{farmer.name}</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <p className="text-sm text-muted-foreground">Farmer ID: {farmer.id}</p>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={`/farmer-ticket-history/${farmer.id}`} className="flex items-center gap-2">
+                    <TicketIcon className="h-4 w-4" />
+                    <span>Ticket History</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <div className="w-full">
+                    <TicketDialog
+                      userType="farmer"
+                      userId={farmer.id}
+                      userName={farmer.name}
+                      userContact={farmer.phone}
+                      onSubmit={handleTicketSubmit}
+                      buttonText="Raise a Ticket"
+                    />
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
       
-      <main className="container mx-auto px-4 py-8">
+      {/* Mobile menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white border-b shadow-sm p-4">
+          <div className="space-y-2">
+            <p className="font-medium">{farmer.name}</p>
+            <p className="text-sm text-muted-foreground">Farmer ID: {farmer.id}</p>
+            <div className="pt-2">
+              <Link to={`/farmer-ticket-history/${farmer.id}`} className="flex items-center gap-2 py-2">
+                <TicketIcon className="h-4 w-4" />
+                <span>Ticket History</span>
+              </Link>
+              <TicketDialog
+                userType="farmer"
+                userId={farmer.id}
+                userName={farmer.name}
+                userContact={farmer.phone}
+                onSubmit={handleTicketSubmit}
+                buttonText="Raise a Ticket"
+              />
+              <Button 
+                variant="ghost"
+                onClick={handleLogout}
+                className="flex items-center gap-2 mt-2 w-full justify-start"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <main className="container mx-auto px-4 py-8 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="md:col-span-2">
             <CardHeader className="pb-2">

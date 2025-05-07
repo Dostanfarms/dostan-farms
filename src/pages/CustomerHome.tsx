@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import {
   LogOut,
   Package,
   List,
-  Ticket
+  Menu
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -70,6 +71,7 @@ const CustomerHome = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(DUMMY_PRODUCTS);
+  const [addedToCartIds, setAddedToCartIds] = useState<{[key: string]: boolean}>({});
   
   // Load cart from localStorage on component mount
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -123,22 +125,13 @@ const CustomerHome = () => {
       }]);
     }
     
-    // Enhanced toast with Go to Cart button
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your cart`,
-      variant: "default",
-      action: (
-        <Button 
-          onClick={() => navigate('/cart')} 
-          variant="outline" 
-          size="sm"
-          className="ml-2"
-        >
-          Go to Cart
-        </Button>
-      ),
-    });
+    // Show added notification on the card
+    setAddedToCartIds(prev => ({ ...prev, [product.id]: true }));
+    
+    // Clear the notification after a delay
+    setTimeout(() => {
+      setAddedToCartIds(prev => ({ ...prev, [product.id]: false }));
+    }, 2000);
   };
   
   const handleTicketSubmit = (ticket: Omit<TicketType, 'id'>) => {
@@ -161,15 +154,25 @@ const CustomerHome = () => {
       .join('')
       .toUpperCase();
   };
-  
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Top navigation bar */}
       <header className="bg-white shadow p-4 sticky top-0 z-10">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
             <Package className="h-6 w-6 text-agri-primary" />
-            <span className="text-xl font-bold">AgriPay</span>
+            <span className="text-xl font-bold hidden sm:inline">AgriPay</span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -193,6 +196,24 @@ const CustomerHome = () => {
                     <List className="h-4 w-4" />
                     <span>My Orders</span>
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/ticket-history" className="flex items-center gap-2">
+                    <Menu className="h-4 w-4" />
+                    <span>Ticket History</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <div className="w-full">
+                    <TicketDialog
+                      userType="customer"
+                      userId={customer.id}
+                      userName={customer.name}
+                      userContact={customer.phone || ""}
+                      onSubmit={handleTicketSubmit}
+                      buttonText="Raise a Ticket"
+                    />
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
@@ -224,21 +245,11 @@ const CustomerHome = () => {
       <main className="container mx-auto py-6 px-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Available Products</h1>
-          
-          {/* Raise a Ticket button - only visible when logged in */}
-          <TicketDialog
-            userType="customer"
-            userId={customer.id}
-            userName={customer.name}
-            userContact={customer.phone || ""}
-            onSubmit={handleTicketSubmit}
-            buttonText="Raise a Ticket"
-          />
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {products.map((product) => (
-            <Card key={product.id} className="overflow-hidden">
+            <Card key={product.id} className="overflow-hidden relative">
               <div className="bg-muted aspect-square flex items-center justify-center">
                 <Package className="h-16 w-16 text-muted-foreground" />
               </div>
@@ -258,6 +269,13 @@ const CustomerHome = () => {
                   Add to Cart
                 </Button>
               </CardContent>
+              
+              {/* Added to Cart notification */}
+              {addedToCartIds[product.id] && (
+                <div className="absolute top-0 right-0 w-full bg-green-500 text-white text-center py-1 text-sm animate-pulse">
+                  Added Successfully
+                </div>
+              )}
             </Card>
           ))}
         </div>

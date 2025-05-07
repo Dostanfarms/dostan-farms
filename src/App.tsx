@@ -11,6 +11,7 @@ import Farmers from "./pages/Farmers";
 import FarmerDetails from "./pages/FarmerDetails";
 import FarmerLogin from "./pages/FarmerLogin";
 import FarmerDashboard from "./pages/FarmerDashboard";
+import FarmerTicketHistory from "./pages/FarmerTicketHistory";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
 import Employees from "./pages/Employees";
@@ -26,6 +27,7 @@ import CustomerRegister from "./pages/CustomerRegister";
 import CustomerProfile from "./pages/CustomerProfile";
 import OrderHistory from "./pages/OrderHistory";
 import CustomerHome from "./pages/CustomerHome";
+import CustomerTicketHistory from "./pages/CustomerTicketHistory";
 import PaymentPage from "./pages/PaymentPage";
 import OrderTracking from "./pages/OrderTracking";
 import CartPage from "./pages/CartPage";
@@ -89,11 +91,13 @@ const App = () => (
             
             {/* Farmer dashboard - separate auth system */}
             <Route path="/farmer-dashboard/:id" element={<FarmerDashboard />} />
+            <Route path="/farmer-ticket-history/:id" element={<FarmerTicketHistory />} />
             
             {/* Customer routes */}
             <Route path="/customer-profile" element={<CustomerProfile />} />
             <Route path="/order-history" element={<OrderHistory />} />
             <Route path="/customer-home" element={<CustomerHome />} />
+            <Route path="/ticket-history" element={<CustomerTicketHistory />} />
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/order-tracking/:id" element={<OrderTracking />} />
             <Route path="/cart" element={<CartPage />} />
