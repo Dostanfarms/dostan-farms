@@ -44,6 +44,35 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
         console.error('Error parsing orders:', error);
         setOrders([]);
       }
+    } else {
+      // Create sample orders for demonstration
+      const sampleOrders = [
+        {
+          id: `ord-${Date.now()}-1`,
+          customerId: customer.id,
+          items: [
+            { name: 'Organic Tomatoes', quantity: 2, price: 150 },
+            { name: 'Fresh Spinach', quantity: 1, price: 80 }
+          ],
+          total: 230,
+          status: 'delivered',
+          date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: `ord-${Date.now()}-2`,
+          customerId: customer.id,
+          items: [
+            { name: 'Organic Carrots', quantity: 3, price: 120 }
+          ],
+          total: 120,
+          status: 'pending',
+          date: new Date().toISOString()
+        }
+      ];
+      setOrders(sampleOrders);
+      
+      // Save sample orders to localStorage for persistence
+      localStorage.setItem('orders', JSON.stringify(sampleOrders));
     }
   }, [customer.id]);
 

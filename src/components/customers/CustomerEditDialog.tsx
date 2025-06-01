@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,16 @@ const CustomerEditDialog = ({ customer, open, onClose, onSave }: CustomerEditDia
     mobile: customer.mobile,
     address: customer.address,
   });
+
+  // Reset form data when customer changes
+  useEffect(() => {
+    setFormData({
+      name: customer.name,
+      email: customer.email,
+      mobile: customer.mobile,
+      address: customer.address,
+    });
+  }, [customer]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

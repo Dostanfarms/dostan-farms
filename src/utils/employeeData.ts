@@ -153,6 +153,11 @@ export const getAccessibleResources = (role: string): string[] => {
 };
 
 export const hasPermission = (resource: string, action: string, userRole: string): boolean => {
-  const accessibleResources = getAccessibleResources(userRole);
-  return accessibleResources.includes(resource);
+  const rolePermission = rolePermissions.find(rp => rp.role === userRole);
+  if (!rolePermission) return false;
+  
+  const resourcePermission = rolePermission.permissions.find(p => p.resource === resource);
+  if (!resourcePermission) return false;
+  
+  return resourcePermission.actions.includes(action as any);
 };
