@@ -62,6 +62,13 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
     }
   };
 
+  const formatTotal = (total: number | undefined | null): string => {
+    if (total === undefined || total === null || isNaN(total)) {
+      return '0.00';
+    }
+    return total.toFixed(2);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -98,11 +105,11 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">#{order.id}</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{order.items.length} item(s)</TableCell>
-                      <TableCell>₹{order.total.toFixed(2)}</TableCell>
+                      <TableCell>{order.items?.length || 0} item(s)</TableCell>
+                      <TableCell>₹{formatTotal(order.total)}</TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status}
+                        <Badge className={getStatusColor(order.status || 'pending')}>
+                          {order.status || 'pending'}
                         </Badge>
                       </TableCell>
                     </TableRow>
