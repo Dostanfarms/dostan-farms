@@ -39,6 +39,10 @@ const EmployeeLogin = () => {
     try {
       const success = await login(username, password);
       if (success) {
+        toast({
+          title: "Login successful",
+          description: "Welcome to your dashboard!",
+        });
         navigate('/dashboard');
       } else {
         toast({
@@ -48,6 +52,7 @@ const EmployeeLogin = () => {
         });
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
         description: "An error occurred during login. Please try again.",
@@ -117,15 +122,6 @@ const EmployeeLogin = () => {
               {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
-          
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <h3 className="text-sm font-medium mb-2">Demo Credentials:</h3>
-            <div className="text-xs space-y-1">
-              <div><strong>Admin:</strong> admin / admin@123</div>
-              <div><strong>Employee:</strong> employee1 / emp@123</div>
-              <div><strong>Manager:</strong> jane.smith@example.com / manager123</div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

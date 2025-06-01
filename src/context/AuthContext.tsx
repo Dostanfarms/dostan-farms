@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Employee } from '../utils/employeeData';
-import { mockEmployees, rolePermissions } from '../utils/employeeData';
+import { initialEmployees, rolePermissions } from '../utils/employeeData';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,19 +25,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
+        console.log('Checking saved user:', parsedUser);
+        
         // First check registered employees (new functionality)
         const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
         const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
         
-        // Look for the user in registered employees first, then in mock employees
+        // Look for the user in registered employees first, then in initial employees
         let employee = registeredEmployees.find((e: Employee) => e.id === parsedUser.id);
         
         if (!employee) {
-          employee = mockEmployees.find(e => e.id === parsedUser.id);
+          employee = initialEmployees.find(e => e.id === parsedUser.id);
         }
         
         if (employee) {
+          console.log('Found employee:', employee);
           setCurrentUser(employee);
+        } else {
+          console.log('Employee not found, clearing saved user');
+          localStorage.removeItem('currentEmployee');
         }
       } catch (error) {
         console.error('Error parsing stored user:', error);
@@ -47,6 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {
+    console.log('Attempting login for:', usernameOrEmail);
+    
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
@@ -59,12 +67,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (e: Employee) => (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
     );
     
-    // If not found, check mock employees (check both email and username)
+    // If not found, check initial employees (check both email and username)
     if (!employee) {
-      employee = mockEmployees.find(e => 
+      employee = initialEmployees.find(e => 
         (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
       );
     }
+    
+    console.log('Login result for', usernameOrEmail, ':', employee ? 'success' : 'failed');
     
     if (employee) {
       setCurrentUser(employee);
@@ -73,10 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: employee.name,
         role: employee.role
       }));
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${employee.name}!`
-      });
       return true;
     }
     
