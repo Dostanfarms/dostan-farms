@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockEmployees } from '@/utils/employeeData';
-import { Employee } from '@/utils/types';
-import { useToast } from '@/components/ui/use-toast';
+import { initialEmployees } from '@/utils/employeeData';
+import { Employee } from '@/utils/employeeData';
+import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/Sidebar';
 import { UserPlus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -15,13 +14,7 @@ import EditEmployeeDialog from '@/components/employees/EditEmployeeDialog';
 import { EmployeeFormData } from '@/components/employees/EmployeeFormBase';
 
 const Employees = () => {
-  const [employees, setEmployees] = useState<Employee[]>(() => {
-    // Load employees from localStorage or use mock data
-    const storedEmployees = localStorage.getItem('registeredEmployees');
-    const parsedEmployees = storedEmployees ? JSON.parse(storedEmployees) : [];
-    return [...mockEmployees, ...parsedEmployees];
-  });
-  
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -34,7 +27,7 @@ const Employees = () => {
     email: '',
     phone: '',
     password: '',
-    role: 'sales',
+    role: 'sales_executive',
     state: '',
     district: '',
     village: '',
@@ -43,6 +36,27 @@ const Employees = () => {
     bankName: '',
     ifscCode: ''
   });
+
+  // Load employees on component mount
+  useEffect(() => {
+    const loadEmployees = () => {
+      const storedEmployees = localStorage.getItem('registeredEmployees');
+      const parsedEmployees = storedEmployees ? JSON.parse(storedEmployees) : [];
+      
+      // Combine initial employees with registered employees
+      const allEmployees = [...initialEmployees, ...parsedEmployees];
+      
+      // Remove duplicates based on ID
+      const uniqueEmployees = allEmployees.filter((employee, index, self) => 
+        index === self.findIndex(e => e.id === employee.id)
+      );
+      
+      console.log('Loading employees:', uniqueEmployees);
+      setEmployees(uniqueEmployees);
+    };
+
+    loadEmployees();
+  }, []);
   
   const handleFormDataChange = (data: Partial<EmployeeFormData>) => {
     setFormData(prev => ({
@@ -61,7 +75,7 @@ const Employees = () => {
       email: '',
       phone: '',
       password: '',
-      role: 'sales',
+      role: 'sales_executive',
       state: '',
       district: '',
       village: '',
@@ -173,8 +187,8 @@ const Employees = () => {
     setFormData({
       name: employee.name,
       email: employee.email,
-      phone: employee.phone,
-      password: employee.password,
+      phone: employee.phone || '',
+      password: employee.password || '',
       role: employee.role,
       state: employee.state || '',
       district: employee.district || '',
@@ -298,7 +312,7 @@ const Employees = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>Employee List</CardTitle>
+              <CardTitle>Employee List ({employees.length} total)</CardTitle>
             </CardHeader>
             <CardContent>
               <EmployeeTable

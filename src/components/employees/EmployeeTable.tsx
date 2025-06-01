@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Pencil, Trash2, User } from 'lucide-react';
-import { Employee } from '@/utils/types';
+import { Employee } from '@/utils/employeeData';
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -20,6 +20,19 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   canEdit,
   canDelete
 }) => {
+  if (employees.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-muted-foreground text-lg mb-2">
+          No employees found
+        </div>
+        <div className="text-sm text-muted-foreground">
+          Add employees using the "Add Employee" button above
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -44,18 +57,20 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                 {employee.name}
               </td>
               <td className="p-2">{employee.email}</td>
-              <td className="p-2">{employee.phone}</td>
+              <td className="p-2">{employee.phone || 'Not provided'}</td>
               <td className="p-2">
                 <span className={`px-2 py-1 rounded-full text-xs ${
                   employee.role === 'admin' 
                     ? 'bg-red-100 text-red-700' 
                     : employee.role === 'manager'
                       ? 'bg-blue-100 text-blue-700'
-                      : employee.role === 'sales'
+                      : employee.role === 'sales_executive'
                         ? 'bg-green-100 text-green-700'
-                        : 'bg-purple-100 text-purple-700'
+                        : employee.role === 'support_agent'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-purple-100 text-purple-700'
                 }`}>
-                  {employee.role.charAt(0).toUpperCase() + employee.role.slice(1)}
+                  {employee.role.replace('_', ' ').charAt(0).toUpperCase() + employee.role.replace('_', ' ').slice(1)}
                 </span>
               </td>
               <td className="p-2">
@@ -64,9 +79,11 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                   "Not specified"}
               </td>
               <td className="p-2">
-                {employee.dateJoined instanceof Date 
-                  ? format(employee.dateJoined, 'MMM dd, yyyy') 
-                  : format(new Date(employee.dateJoined), 'MMM dd, yyyy')}
+                {employee.dateJoined ? (
+                  employee.dateJoined instanceof Date 
+                    ? format(employee.dateJoined, 'MMM dd, yyyy') 
+                    : format(new Date(employee.dateJoined), 'MMM dd, yyyy')
+                ) : 'Not available'}
               </td>
               <td className="p-2 text-right">
                 <div className="flex justify-end gap-2">

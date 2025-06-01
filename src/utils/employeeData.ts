@@ -99,6 +99,7 @@ export const rolePermissions: RolePermission[] = [
       { resource: 'products', actions: ['view', 'create', 'edit'] },
       { resource: 'sales', actions: ['view', 'create', 'edit'] },
       { resource: 'transactions', actions: ['view'] },
+      { resource: 'employees', actions: ['view', 'create', 'edit'] },
       { resource: 'coupons', actions: ['view', 'create', 'edit'] },
       { resource: 'tickets', actions: ['view', 'create', 'edit'] }
     ]
@@ -111,6 +112,7 @@ export const rolePermissions: RolePermission[] = [
       { resource: 'customers', actions: ['view', 'create', 'edit', 'delete'] },
       { resource: 'products', actions: ['view'] },
       { resource: 'sales', actions: ['view', 'create'] },
+      { resource: 'employees', actions: ['view'] },
       { resource: 'coupons', actions: ['view'] }
     ]
   },
@@ -119,6 +121,7 @@ export const rolePermissions: RolePermission[] = [
     permissions: [
       { resource: 'dashboard', actions: ['view'] },
       { resource: 'customers', actions: ['view', 'edit'] },
+      { resource: 'employees', actions: ['view'] },
       { resource: 'tickets', actions: ['view', 'create', 'edit'] },
       { resource: 'coupons', actions: ['view'] }
     ]
@@ -131,6 +134,7 @@ export const rolePermissions: RolePermission[] = [
       { resource: 'customers', actions: ['view'] },
       { resource: 'products', actions: ['view'] },
       { resource: 'sales', actions: ['view'] },
+      { resource: 'employees', actions: ['view'] },
       { resource: 'transactions', actions: ['view'] }
     ]
   }
@@ -139,10 +143,10 @@ export const rolePermissions: RolePermission[] = [
 export const getAccessibleResources = (role: string): string[] => {
   const rolePermissions = {
     'admin': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'transactions', 'employees', 'roles', 'coupons', 'tickets'],
-    'manager': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'transactions', 'coupons', 'tickets'],
-    'sales_executive': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'coupons'],
-    'support_agent': ['dashboard', 'customers', 'tickets', 'coupons'],
-    'viewer': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'transactions']
+    'manager': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'transactions', 'employees', 'coupons', 'tickets'],
+    'sales_executive': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'employees', 'coupons'],
+    'support_agent': ['dashboard', 'customers', 'employees', 'tickets', 'coupons'],
+    'viewer': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'employees', 'transactions']
   };
 
   return rolePermissions[role] || [];
