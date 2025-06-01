@@ -33,6 +33,7 @@ import OrderTracking from "./pages/OrderTracking";
 import CartPage from "./pages/CartPage";
 import OrderReceiptPage from "./pages/OrderReceiptPage";
 import Tickets from "./pages/Tickets";
+import Customers from "./pages/Customers";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,10 @@ const App = () => (
             <Route element={<ProtectedRoute resource="farmers" action="view" />}>
               <Route path="/farmers" element={<Farmers />} />
               <Route path="/farmer/:id" element={<FarmerDetails />} />
+            </Route>
+            
+            <Route element={<ProtectedRoute resource="customers" action="view" />}>
+              <Route path="/customers" element={<Customers />} />
             </Route>
             
             <Route element={<ProtectedRoute resource="products" action="view" />}>

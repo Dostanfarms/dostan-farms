@@ -9,7 +9,7 @@ import {
   SidebarMenuItem, 
   SidebarMenuButton 
 } from '@/components/ui/sidebar';
-import { BarChart, Users } from 'lucide-react';
+import { BarChart, Users, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessibleResources } from '@/utils/employeeData';
 
@@ -30,6 +30,12 @@ const TopLevelMenu = () => {
       icon: <Users className="h-5 w-5" />,
       path: '/farmers',
       resource: 'farmers'
+    },
+    {
+      title: 'Customers',
+      icon: <ShoppingBag className="h-5 w-5" />,
+      path: '/customers',
+      resource: 'customers'
     },
   ];
 
