@@ -28,10 +28,10 @@ export const roles = [
 export const initialEmployees: Employee[] = [
   {
     id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+    name: 'Admin User',
+    email: 'admin',
     role: 'admin',
-    password: 'admin123'
+    password: 'admin@123'
   },
   {
     id: '2',
@@ -42,10 +42,10 @@ export const initialEmployees: Employee[] = [
   },
   {
     id: '3',
-    name: 'Robert Jones',
-    email: 'robert.jones@example.com',
+    name: 'Employee One',
+    email: 'employee1',
     role: 'sales_executive',
-    password: 'sales123'
+    password: 'emp@123'
   },
   {
     id: '4',
@@ -95,7 +95,7 @@ export const rolePermissions: RolePermission[] = [
     permissions: [
       { resource: 'dashboard', actions: ['view'] },
       { resource: 'farmers', actions: ['view', 'create', 'edit'] },
-      { resource: 'customers', actions: ['view', 'create', 'edit'] },
+      { resource: 'customers', actions: ['view', 'create', 'edit', 'delete'] },
       { resource: 'products', actions: ['view', 'create', 'edit'] },
       { resource: 'sales', actions: ['view', 'create', 'edit'] },
       { resource: 'transactions', actions: ['view'] },
@@ -108,7 +108,7 @@ export const rolePermissions: RolePermission[] = [
     permissions: [
       { resource: 'dashboard', actions: ['view'] },
       { resource: 'farmers', actions: ['view', 'create'] },
-      { resource: 'customers', actions: ['view', 'create'] },
+      { resource: 'customers', actions: ['view', 'create', 'edit', 'delete'] },
       { resource: 'products', actions: ['view'] },
       { resource: 'sales', actions: ['view', 'create'] },
       { resource: 'coupons', actions: ['view'] }
@@ -118,7 +118,7 @@ export const rolePermissions: RolePermission[] = [
     role: 'support_agent',
     permissions: [
       { resource: 'dashboard', actions: ['view'] },
-      { resource: 'customers', actions: ['view'] },
+      { resource: 'customers', actions: ['view', 'edit'] },
       { resource: 'tickets', actions: ['view', 'create', 'edit'] },
       { resource: 'coupons', actions: ['view'] }
     ]

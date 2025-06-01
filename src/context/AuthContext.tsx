@@ -1,13 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Employee, Role } from '../utils/types';
+import { Employee } from '../utils/employeeData';
 import { mockEmployees, rolePermissions } from '../utils/employeeData';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 type AuthContextType = {
   currentUser: Employee | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (usernameOrEmail: string, password: string) => Promise<boolean>;
   logout: () => void;
   checkPermission: (resource: string, action: 'view' | 'create' | 'edit' | 'delete') => boolean;
 };
@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
@@ -54,14 +54,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
     const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
     
-    // Look in registered employees first
+    // Look in registered employees first (check both email and username)
     let employee = registeredEmployees.find(
-      (e: Employee) => e.email === email && e.password === password
+      (e: Employee) => (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
     );
     
-    // If not found, check mock employees
+    // If not found, check mock employees (check both email and username)
     if (!employee) {
-      employee = mockEmployees.find(e => e.email === email && e.password === password);
+      employee = mockEmployees.find(e => 
+        (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
+      );
     }
     
     if (employee) {
@@ -78,11 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     
-    toast({
-      title: "Login failed",
-      description: "Invalid email or password",
-      variant: "destructive"
-    });
     return false;
   };
 

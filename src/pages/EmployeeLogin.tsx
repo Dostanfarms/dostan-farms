@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 const EmployeeLogin = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,17 +24,26 @@ const EmployeeLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!username.trim() || !password.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter both username and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
+      const success = await login(username, password);
       if (success) {
-        // Redirect to dashboard instead of home page
         navigate('/dashboard');
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
+          description: "Invalid username or password. Please try again.",
           variant: "destructive",
         });
       }
@@ -62,13 +71,13 @@ const EmployeeLogin = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username/Email</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="Enter username or email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -83,7 +92,7 @@ const EmployeeLogin = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Your password"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -108,6 +117,15 @@ const EmployeeLogin = () => {
               {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
+          
+          <div className="mt-6 p-4 bg-muted rounded-lg">
+            <h3 className="text-sm font-medium mb-2">Demo Credentials:</h3>
+            <div className="text-xs space-y-1">
+              <div><strong>Admin:</strong> admin / admin@123</div>
+              <div><strong>Employee:</strong> employee1 / emp@123</div>
+              <div><strong>Manager:</strong> jane.smith@example.com / manager123</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
