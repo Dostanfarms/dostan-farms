@@ -1,8 +1,7 @@
-
 import { Employee, Product, Coupon, RolePermission } from './types';
 
-// Re-export Employee type for convenience
-export { Employee } from './types';
+// Re-export Employee type for convenience using proper TypeScript syntax
+export type { Employee } from './types';
 
 // Initial employees data
 export const initialEmployees: Employee[] = [
