@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import Sidebar from '@/components/Sidebar';
-import { mockProducts } from '@/utils/mockData';
 import { Product, CartItem, Customer, Coupon } from '@/utils/types';
 import { Search, ShoppingCart, Package, Tag, Plus, Minus, Trash2, CreditCard, Check, Receipt, Printer, CreditCard as PosIcon, Coins, QrCode } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -15,11 +14,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import QRCode from 'react-qr-code';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getProductsFromLocalStorage } from '@/utils/employeeData';
 
 const Sales = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [products] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
@@ -35,6 +35,12 @@ const Sales = () => {
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const receiptRef = useRef<HTMLDivElement>(null);
 
+  // Load products from localStorage instead of mockData
+  React.useEffect(() => {
+    const storedProducts = getProductsFromLocalStorage();
+    setProducts(storedProducts);
+  }, []);
+  
   // Load available coupons
   React.useEffect(() => {
     // In a real app, fetch from API/backend

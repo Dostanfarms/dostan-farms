@@ -9,11 +9,13 @@ import Sidebar from '@/components/Sidebar';
 import ProductForm from '@/components/ProductForm';
 import { mockFarmers } from '@/utils/mockData';
 import { Product } from '@/utils/types';
-import { Search, Plus, Package, Edit, Tag, Barcode } from 'lucide-react';
+import { Search, Plus, Package, Edit, Tag, Barcode, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { saveProductsToLocalStorage, getProductsFromLocalStorage } from '@/utils/employeeData';
+import { useToast } from '@/hooks/use-toast';
 
 const Products = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -57,9 +59,74 @@ const Products = () => {
     setIsDialogOpen(true);
   };
 
-  const getFarmerName = (farmerId: string) => {
-    const farmer = mockFarmers.find(f => f.id === farmerId);
-    return farmer ? farmer.name : 'Unknown Farmer';
+  const printBarcode = (product: Product) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print Barcode - ${product.name}</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 20px; 
+                margin: 0;
+              }
+              .barcode-container { 
+                border: 2px solid #000; 
+                padding: 20px; 
+                display: inline-block; 
+                background: white;
+              }
+              .product-name { 
+                font-size: 18px; 
+                font-weight: bold; 
+                margin-bottom: 15px; 
+              }
+              .barcode { 
+                font-family: 'Courier New', monospace; 
+                font-size: 24px; 
+                font-weight: bold; 
+                letter-spacing: 2px; 
+                margin: 10px 0; 
+              }
+              .price { 
+                font-size: 16px; 
+                margin-top: 15px; 
+              }
+              @media print {
+                body { margin: 0; }
+                .barcode-container { border: 2px solid #000; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="barcode-container">
+              <div class="product-name">${product.name}</div>
+              <div class="barcode">${product.barcode}</div>
+              <div class="price">₹${product.pricePerUnit} per ${product.unit}</div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+      
+      toast({
+        title: "Barcode printed",
+        description: `Barcode for ${product.name} has been sent to printer`,
+      });
+    } else {
+      toast({
+        title: "Unable to print",
+        description: "Please check your browser settings and try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   return (
@@ -135,33 +202,40 @@ const Products = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
+                      {/* Barcode Display - Large and Prominent */}
                       {product.barcode && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Barcode:</span>
-                          <div className="flex items-center gap-1">
-                            <Barcode className="h-3 w-3" />
-                            <span className="font-mono text-xs">{product.barcode}</span>
+                        <div className="text-center p-4 bg-gray-50 rounded-lg border-2 border-dashed">
+                          <div className="flex justify-center items-center gap-2 mb-2">
+                            <Barcode className="h-5 w-5 text-gray-600" />
+                            <span className="text-sm font-medium text-gray-600">Barcode</span>
                           </div>
+                          <div className="font-mono text-lg font-bold text-center mb-3 tracking-wider">
+                            {product.barcode}
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => printBarcode(product)}
+                            className="w-full"
+                          >
+                            <Printer className="h-4 w-4 mr-2" /> Print Barcode
+                          </Button>
                         </div>
                       )}
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Unit:</span>
-                        <span>{product.unit}</span>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Unit:</span>
+                          <span>{product.unit}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Price/Unit:</span>
+                          <span className="font-semibold">₹{product.pricePerUnit}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Price/Unit:</span>
-                        <span>₹{product.pricePerUnit}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Farmer:</span>
-                        <span>{getFarmerName(product.farmerId)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Date:</span>
-                        <span>{product.date.toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex gap-2 mt-2">
+                      
+                      <div className="flex gap-2 mt-4">
                         <Button 
                           className="flex-1 bg-agri-primary hover:bg-agri-secondary" 
                           onClick={() => handleEditProduct(product)}
