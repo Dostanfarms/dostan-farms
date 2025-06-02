@@ -1,12 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Product } from '@/utils/types';
-import { mockProducts } from '@/utils/mockData';
+import { Barcode } from 'lucide-react';
 
 interface ProductFormProps {
   farmerId: string;
@@ -17,51 +16,31 @@ interface ProductFormProps {
 
 const ProductForm = ({ farmerId, onSubmit, onCancel, editProduct }: ProductFormProps) => {
   const [name, setName] = useState(editProduct?.name || '');
-  const [quantity, setQuantity] = useState(editProduct?.quantity.toString() || '');
   const [unit, setUnit] = useState(editProduct?.unit || 'kg');
   const [pricePerUnit, setPricePerUnit] = useState(editProduct?.pricePerUnit.toString() || '');
-  const [category, setCategory] = useState(editProduct?.category || '');
-  const [availableProducts, setAvailableProducts] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Get unique product names from the Products page to populate dropdown
-    const uniqueProducts = [...new Set(mockProducts.map(product => product.name))];
-    setAvailableProducts(uniqueProducts);
-    
-    // If editing and name not in available products, add it
-    if (editProduct?.name && !uniqueProducts.includes(editProduct.name)) {
-      setAvailableProducts([...uniqueProducts, editProduct.name]);
-    }
-  }, [editProduct]);
-
-  const handleNameChange = (selectedName: string) => {
-    setName(selectedName);
-    
-    // Find matching product to auto-fill other fields
-    const matchingProduct = mockProducts.find(p => p.name === selectedName);
-    if (matchingProduct) {
-      setCategory(matchingProduct.category);
-      setUnit(matchingProduct.unit);
-      setPricePerUnit(matchingProduct.pricePerUnit.toString());
-    }
+  // Generate barcode for new products or keep existing barcode for edits
+  const generateBarcode = () => {
+    return `BAR${Date.now()}${Math.floor(Math.random() * 1000)}`;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !quantity || !pricePerUnit) {
+    if (!name || !pricePerUnit) {
       return;
     }
     
     const product: Product = {
       id: editProduct?.id || `prod_${Date.now()}`,
       name,
-      quantity: parseFloat(quantity),
+      quantity: 1, // Default quantity to 1 since it's removed from form
       unit,
       pricePerUnit: parseFloat(pricePerUnit),
-      category,
+      category: 'General', // Default category since it's removed from form
       date: editProduct?.date || new Date(),
-      farmerId
+      farmerId,
+      barcode: editProduct?.barcode || generateBarcode() // Keep existing barcode or generate new one
     };
     
     onSubmit(product);
@@ -73,50 +52,16 @@ const ProductForm = ({ farmerId, onSubmit, onCancel, editProduct }: ProductFormP
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="product-name">Product Name</Label>
-            <Select 
-              value={name} 
-              onValueChange={handleNameChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a product" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Products</SelectLabel>
-                  {availableProducts.map((productName) => (
-                    <SelectItem key={productName} value={productName}>
-                      {productName}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
             <Input
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              id="product-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter product name"
               required
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity</Label>
-              <Input 
-                id="quantity"
-                type="number" 
-                min="0"
-                step="0.01"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
-            </div>
-            
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
               <Select value={unit} onValueChange={setUnit}>
@@ -133,20 +78,30 @@ const ProductForm = ({ farmerId, onSubmit, onCancel, editProduct }: ProductFormP
                 </SelectContent>
               </Select>
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="price">Price per Unit (₹)</Label>
+              <Input 
+                id="price"
+                type="number" 
+                min="0"
+                step="0.01"
+                value={pricePerUnit}
+                onChange={(e) => setPricePerUnit(e.target.value)}
+                required
+              />
+            </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="price">Price per Unit (₹)</Label>
-            <Input 
-              id="price"
-              type="number" 
-              min="0"
-              step="0.01"
-              value={pricePerUnit}
-              onChange={(e) => setPricePerUnit(e.target.value)}
-              required
-            />
-          </div>
+
+          {editProduct?.barcode && (
+            <div className="space-y-2">
+              <Label>Barcode</Label>
+              <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                <Barcode className="h-4 w-4" />
+                <span className="font-mono text-sm">{editProduct.barcode}</span>
+              </div>
+            </div>
+          )}
           
           <div className="flex gap-2 justify-end pt-2">
             <Button 

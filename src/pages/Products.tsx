@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,35 +7,46 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import Sidebar from '@/components/Sidebar';
 import ProductForm from '@/components/ProductForm';
-import { mockProducts, mockFarmers } from '@/utils/mockData';
+import { mockFarmers } from '@/utils/mockData';
 import { Product } from '@/utils/types';
-import { Search, Plus, Package, Edit, Tag } from 'lucide-react';
+import { Search, Plus, Package, Edit, Tag, Barcode } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { saveProductsToLocalStorage, getProductsFromLocalStorage } from '@/utils/employeeData';
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('1');
   
+  // Load products from localStorage on component mount
+  useEffect(() => {
+    const storedProducts = getProductsFromLocalStorage();
+    setProducts(storedProducts);
+  }, []);
+
   // Filter products based on search
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.barcode && product.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
   const handleAddProduct = (newProduct: Product) => {
+    let updatedProducts;
+    
     if (selectedProduct) {
       // Update existing product
-      const updatedProducts = products.map(product => 
+      updatedProducts = products.map(product => 
         product.id === newProduct.id ? newProduct : product
       );
-      setProducts(updatedProducts);
     } else {
       // Add new product
-      setProducts([...products, newProduct]);
+      updatedProducts = [...products, newProduct];
     }
+    
+    setProducts(updatedProducts);
+    saveProductsToLocalStorage(updatedProducts);
     setIsDialogOpen(false);
     setSelectedProduct(undefined);
   };
@@ -62,7 +73,7 @@ const Products = () => {
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder="Search products or barcodes..."
                   className="pl-8 w-full md:w-[250px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -99,7 +110,7 @@ const Products = () => {
                 <>
                   <h3 className="text-lg font-medium mb-1">No products found</h3>
                   <p className="text-muted-foreground text-center">
-                    No products match your search criteria. Try with a different name or category.
+                    No products match your search criteria. Try with a different name or barcode.
                   </p>
                 </>
               ) : (
@@ -125,17 +136,22 @@ const Products = () => {
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="space-y-3">
+                      {product.barcode && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Barcode:</span>
+                          <div className="flex items-center gap-1">
+                            <Barcode className="h-3 w-3" />
+                            <span className="font-mono text-xs">{product.barcode}</span>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Quantity:</span>
-                        <span>{product.quantity} {product.unit}</span>
+                        <span className="text-sm text-muted-foreground">Unit:</span>
+                        <span>{product.unit}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Price/Unit:</span>
                         <span>₹{product.pricePerUnit}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Total Value:</span>
-                        <span>₹{product.quantity * product.pricePerUnit}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Farmer:</span>

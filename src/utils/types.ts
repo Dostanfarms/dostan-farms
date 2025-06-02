@@ -1,4 +1,3 @@
-
 export interface Farmer {
   id: string;
   name: string;
@@ -27,6 +26,7 @@ export interface Product {
   category: string;
   date: Date;
   farmerId: string;
+  barcode?: string; // Added barcode field
 }
 
 export interface Transaction {
