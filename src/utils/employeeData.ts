@@ -179,3 +179,22 @@ export const hasPermission = (resource: string, action: string, userRole: string
   
   return resourcePermission.actions.includes(action as any);
 };
+
+// Helper functions to manage products and coupons in localStorage
+export const saveProductsToLocalStorage = (products: any[]) => {
+  localStorage.setItem('products', JSON.stringify(products));
+};
+
+export const getProductsFromLocalStorage = () => {
+  const products = localStorage.getItem('products');
+  return products ? JSON.parse(products) : [];
+};
+
+export const saveCouponsToLocalStorage = (coupons: any[]) => {
+  localStorage.setItem('coupons', JSON.stringify(coupons));
+};
+
+export const getCouponsFromLocalStorage = () => {
+  const coupons = localStorage.getItem('coupons');
+  return coupons ? JSON.parse(coupons) : [];
+};

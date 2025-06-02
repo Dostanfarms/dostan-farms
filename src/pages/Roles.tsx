@@ -44,13 +44,15 @@ import { Label } from "@/components/ui/label";
 const resources = [
   { id: 'dashboard', name: 'Dashboard' },
   { id: 'farmers', name: 'Farmers' },
+  { id: 'customers', name: 'Customers' },
   { id: 'products', name: 'Products' },
   { id: 'sales', name: 'Add Sale' },
   { id: 'transactions', name: 'Transactions' },
   { id: 'settlements', name: 'Settlements' },
   { id: 'coupons', name: 'Coupons' },
   { id: 'employees', name: 'Employees' },
-  { id: 'roles', name: 'Roles' }
+  { id: 'roles', name: 'Roles' },
+  { id: 'tickets', name: 'Tickets' }
 ];
 
 const actions = [

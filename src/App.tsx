@@ -80,8 +80,9 @@ const App = () => (
               <Route path="/transactions" element={<Transactions />} />
             </Route>
             
-            {/* Removed ProtectedRoute for Coupons to allow all roles access */}
-            <Route path="/coupons" element={<Coupons />} />
+            <Route element={<ProtectedRoute resource="coupons" action="view" />}>
+              <Route path="/coupons" element={<Coupons />} />
+            </Route>
             
             <Route element={<ProtectedRoute resource="employees" action="view" />}>
               <Route path="/employees" element={<Employees />} />
@@ -91,8 +92,9 @@ const App = () => (
               <Route path="/roles" element={<Roles />} />
             </Route>
             
-            {/* Added route for tickets */}
-            <Route path="/tickets" element={<Tickets />} />
+            <Route element={<ProtectedRoute resource="tickets" action="view" />}>
+              <Route path="/tickets" element={<Tickets />} />
+            </Route>
             
             {/* Farmer dashboard - separate auth system */}
             <Route path="/farmer-dashboard/:id" element={<FarmerDashboard />} />

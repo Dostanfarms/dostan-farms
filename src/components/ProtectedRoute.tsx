@@ -11,11 +11,23 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ resource, action }) => {
   const { currentUser, checkPermission } = useAuth();
 
+  console.log('ProtectedRoute check:', { 
+    currentUser: currentUser?.name, 
+    role: currentUser?.role, 
+    resource, 
+    action 
+  });
+
   if (!currentUser) {
+    console.log('No current user, redirecting to login');
     return <Navigate to="/employee-login" replace />;
   }
 
-  if (!checkPermission(resource, action)) {
+  const hasAccess = checkPermission(resource, action);
+  console.log('Permission result:', hasAccess);
+
+  if (!hasAccess) {
+    console.log('Access denied, redirecting to access-denied page');
     return <Navigate to="/access-denied" replace />;
   }
 
