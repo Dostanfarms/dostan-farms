@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { initialEmployees } from '@/utils/employeeData';
+import { getAllEmployees } from '@/utils/employeeData';
 import { Employee } from '@/utils/employeeData';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/Sidebar';
@@ -40,22 +40,21 @@ const Employees = () => {
   // Load employees on component mount
   useEffect(() => {
     const loadEmployees = () => {
-      const storedEmployees = localStorage.getItem('registeredEmployees');
-      const parsedEmployees = storedEmployees ? JSON.parse(storedEmployees) : [];
-      
-      // Combine initial employees with registered employees
-      const allEmployees = [...initialEmployees, ...parsedEmployees];
-      
-      // Remove duplicates based on ID
-      const uniqueEmployees = allEmployees.filter((employee, index, self) => 
-        index === self.findIndex(e => e.id === employee.id)
-      );
-      
-      console.log('Loading employees:', uniqueEmployees);
-      setEmployees(uniqueEmployees);
+      console.log('Loading all employees...');
+      const allEmployees = getAllEmployees();
+      console.log('Loaded employees:', allEmployees);
+      setEmployees(allEmployees);
     };
 
     loadEmployees();
+    
+    // Listen for storage changes to update employee list
+    const handleStorageChange = () => {
+      loadEmployees();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   
   const handleFormDataChange = (data: Partial<EmployeeFormData>) => {
@@ -79,6 +78,7 @@ const Employees = () => {
       state: '',
       district: '',
       village: '',
+      profilePhoto: '',
       accountHolderName: '',
       accountNumber: '',
       bankName: '',
@@ -160,20 +160,25 @@ const Employees = () => {
       dateJoined: new Date()
     };
     
-    const updatedEmployees = [...employees, newEmployee];
-    setEmployees(updatedEmployees);
-    
-    // Save to localStorage
+    // Get existing registered employees
     const registeredEmployees = localStorage.getItem('registeredEmployees');
     const parsedEmployees = registeredEmployees ? JSON.parse(registeredEmployees) : [];
-    localStorage.setItem('registeredEmployees', JSON.stringify([...parsedEmployees, newEmployee]));
+    
+    // Add new employee to registered employees
+    const updatedRegisteredEmployees = [...parsedEmployees, newEmployee];
+    localStorage.setItem('registeredEmployees', JSON.stringify(updatedRegisteredEmployees));
+    
+    // Update local state with all employees
+    const allEmployees = getAllEmployees();
+    setEmployees(allEmployees);
     
     setIsAddDialogOpen(false);
     resetForm();
     
+    console.log('Employee added:', newEmployee);
     toast({
       title: "Employee added",
-      description: `${formData.name} was successfully added as ${formData.role}.`
+      description: `${formData.name} was successfully added as ${formData.role} and can now log in.`
     });
   };
   

@@ -19,6 +19,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Helper function to get all employees (initial + registered)
+  const getAllEmployees = (): Employee[] => {
+    const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
+    const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
+    
+    // Combine initial employees with registered employees
+    const allEmployees = [...initialEmployees, ...registeredEmployees];
+    
+    // Remove duplicates based on ID
+    return allEmployees.filter((employee, index, self) => 
+      index === self.findIndex(e => e.id === employee.id)
+    );
+  };
+
   // Check for logged in user on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('currentEmployee');
@@ -27,16 +41,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const parsedUser = JSON.parse(savedUser);
         console.log('Checking saved user:', parsedUser);
         
-        // First check registered employees (new functionality)
-        const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
-        const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
+        // Get all employees (initial + registered)
+        const allEmployees = getAllEmployees();
         
-        // Look for the user in registered employees first, then in initial employees
-        let employee = registeredEmployees.find((e: Employee) => e.id === parsedUser.id);
-        
-        if (!employee) {
-          employee = initialEmployees.find(e => e.id === parsedUser.id);
-        }
+        // Look for the user in all employees
+        const employee = allEmployees.find(e => e.id === parsedUser.id);
         
         if (employee) {
           console.log('Found employee:', employee);
@@ -58,21 +67,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    // First check registered employees
-    const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
-    const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
+    // Get all employees (initial + registered)
+    const allEmployees = getAllEmployees();
     
-    // Look in registered employees first (check both email and username)
-    let employee = registeredEmployees.find(
-      (e: Employee) => (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
+    // Look for employee with matching credentials (check both email and name)
+    const employee = allEmployees.find(e => 
+      (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
     );
-    
-    // If not found, check initial employees (check both email and username)
-    if (!employee) {
-      employee = initialEmployees.find(e => 
-        (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
-      );
-    }
     
     console.log('Login result for', usernameOrEmail, ':', employee ? 'success' : 'failed');
     
@@ -81,7 +82,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('currentEmployee', JSON.stringify({
         id: employee.id,
         name: employee.name,
-        role: employee.role
+        role: employee.role,
+        email: employee.email
       }));
       return true;
     }
@@ -100,19 +102,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const checkPermission = (resource: string, action: 'view' | 'create' | 'edit' | 'delete'): boolean => {
-    if (!currentUser) return false;
+    if (!currentUser) {
+      console.log('No current user, permission denied');
+      return false;
+    }
+    
+    console.log(`Checking permission for user ${currentUser.name} (${currentUser.role}) - ${resource}:${action}`);
     
     // Check if there are custom permissions stored in localStorage
     const storedPermissions = localStorage.getItem('rolePermissions');
     const permissionsToUse = storedPermissions ? JSON.parse(storedPermissions) : rolePermissions;
     
     const rolePermission = permissionsToUse.find((rp: any) => rp.role === currentUser.role);
-    if (!rolePermission) return false;
+    if (!rolePermission) {
+      console.log(`No permissions found for role: ${currentUser.role}`);
+      return false;
+    }
     
     const resourcePermission = rolePermission.permissions.find((p: any) => p.resource === resource);
-    if (!resourcePermission) return false;
+    if (!resourcePermission) {
+      console.log(`No permissions found for resource: ${resource}`);
+      return false;
+    }
     
-    return resourcePermission.actions.includes(action);
+    const hasAccess = resourcePermission.actions.includes(action);
+    console.log(`Permission result: ${hasAccess}`);
+    return hasAccess;
   };
 
   const value = {

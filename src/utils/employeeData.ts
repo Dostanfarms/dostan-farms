@@ -140,20 +140,38 @@ export const rolePermissions: RolePermission[] = [
   }
 ];
 
-export const getAccessibleResources = (role: string): string[] => {
-  const rolePermissions = {
-    'admin': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'transactions', 'employees', 'roles', 'coupons', 'tickets'],
-    'manager': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'transactions', 'employees', 'coupons', 'tickets'],
-    'sales_executive': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'employees', 'coupons'],
-    'support_agent': ['dashboard', 'customers', 'employees', 'tickets', 'coupons'],
-    'viewer': ['dashboard', 'farmers', 'customers', 'products', 'sales', 'employees', 'transactions']
-  };
+// Helper function to get all employees from localStorage
+export const getAllEmployees = (): Employee[] => {
+  const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
+  const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
+  
+  // Combine initial employees with registered employees
+  const allEmployees = [...initialEmployees, ...registeredEmployees];
+  
+  // Remove duplicates based on ID
+  return allEmployees.filter((employee, index, self) => 
+    index === self.findIndex(e => e.id === employee.id)
+  );
+};
 
-  return rolePermissions[role] || [];
+export const getAccessibleResources = (role: string): string[] => {
+  // Get custom permissions from localStorage if they exist
+  const storedPermissions = localStorage.getItem('rolePermissions');
+  const permissionsToUse = storedPermissions ? JSON.parse(storedPermissions) : rolePermissions;
+  
+  const rolePermission = permissionsToUse.find((rp: RolePermission) => rp.role === role);
+  if (!rolePermission) return [];
+  
+  // Extract unique resource names from permissions
+  return rolePermission.permissions.map(p => p.resource);
 };
 
 export const hasPermission = (resource: string, action: string, userRole: string): boolean => {
-  const rolePermission = rolePermissions.find(rp => rp.role === userRole);
+  // Get custom permissions from localStorage if they exist
+  const storedPermissions = localStorage.getItem('rolePermissions');
+  const permissionsToUse = storedPermissions ? JSON.parse(storedPermissions) : rolePermissions;
+  
+  const rolePermission = permissionsToUse.find((rp: RolePermission) => rp.role === userRole);
   if (!rolePermission) return false;
   
   const resourcePermission = rolePermission.permissions.find(p => p.resource === resource);
