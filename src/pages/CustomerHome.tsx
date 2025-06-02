@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Product, CartItem } from '@/utils/types';
+import { getProductsFromLocalStorage } from '@/utils/employeeData';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +71,7 @@ const DUMMY_PRODUCTS: Product[] = [
 const CustomerHome = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>(DUMMY_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [addedToCartIds, setAddedToCartIds] = useState<{[key: string]: boolean}>({});
   const [menuOpen, setMenuOpen] = useState(false);
   
@@ -80,6 +80,12 @@ const CustomerHome = () => {
     const savedCart = localStorage.getItem('customerCart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
+  
+  // Load products from localStorage on component mount
+  useEffect(() => {
+    const storedProducts = getProductsFromLocalStorage();
+    setProducts(storedProducts);
+  }, []);
   
   // Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -295,38 +301,48 @@ const CustomerHome = () => {
           <h1 className="text-2xl font-bold">Available Products</h1>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {products.map((product) => (
-            <Card key={product.id} className="overflow-hidden relative">
-              <div className="bg-muted aspect-square flex items-center justify-center">
-                <Package className="h-16 w-16 text-muted-foreground" />
-              </div>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold">{product.name}</h3>
-                  <span className="text-agri-primary font-semibold">
-                    ₹{product.pricePerUnit}/{product.unit}
-                  </span>
+        {products.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-lg">
+            <Package className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-1">No products available</h3>
+            <p className="text-muted-foreground text-center">
+              No products have been added to the system yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {products.map((product) => (
+              <Card key={product.id} className="overflow-hidden relative">
+                <div className="bg-muted aspect-square flex items-center justify-center">
+                  <Package className="h-16 w-16 text-muted-foreground" />
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">Category: {product.category}</p>
-                <Button 
-                  className="w-full bg-agri-primary hover:bg-agri-secondary"
-                  onClick={() => addToCart(product)}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart
-                </Button>
-              </CardContent>
-              
-              {/* Added to Cart notification */}
-              {addedToCartIds[product.id] && (
-                <div className="absolute top-0 right-0 w-full bg-green-500 text-white text-center py-1 text-sm animate-pulse">
-                  Added Successfully
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold">{product.name}</h3>
+                    <span className="text-agri-primary font-semibold">
+                      ₹{product.pricePerUnit}/{product.unit}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">Category: {product.category}</p>
+                  <Button 
+                    className="w-full bg-agri-primary hover:bg-agri-secondary"
+                    onClick={() => addToCart(product)}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
+                </CardContent>
+                
+                {/* Added to Cart notification */}
+                {addedToCartIds[product.id] && (
+                  <div className="absolute top-0 right-0 w-full bg-green-500 text-white text-center py-1 text-sm animate-pulse">
+                    Added Successfully
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

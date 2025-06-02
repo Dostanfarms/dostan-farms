@@ -92,7 +92,7 @@ const Products = () => {
                 letter-spacing: 2px; 
                 margin: 10px 0; 
               }
-              .price { 
+              .unit { 
                 font-size: 16px; 
                 margin-top: 15px; 
               }
@@ -106,7 +106,7 @@ const Products = () => {
             <div class="barcode-container">
               <div class="product-name">${product.name}</div>
               <div class="barcode">${product.barcode}</div>
-              <div class="price">₹${product.pricePerUnit} per ${product.unit}</div>
+              <div class="unit">${product.unit}</div>
             </div>
           </body>
         </html>
@@ -205,13 +205,12 @@ const Products = () => {
                     <div className="space-y-4">
                       {/* Barcode Display - Large and Prominent */}
                       {product.barcode && (
-                        <div className="text-center p-4 bg-gray-50 rounded-lg border-2 border-dashed">
-                          <div className="flex justify-center items-center gap-2 mb-2">
-                            <Barcode className="h-5 w-5 text-gray-600" />
-                            <span className="text-sm font-medium text-gray-600">Barcode</span>
+                        <div className="text-center p-6 bg-gray-50 rounded-lg border-2 border-dashed">
+                          <div className="flex justify-center items-center gap-2 mb-4">
+                            <Barcode className="h-6 w-6 text-gray-600" />
                           </div>
-                          <div className="font-mono text-lg font-bold text-center mb-3 tracking-wider">
-                            {product.barcode}
+                          <div className="font-mono text-3xl font-bold text-center mb-4 tracking-wider bg-white p-4 border-2 border-black">
+                            |||||| |||| |||||| |||| ||||||
                           </div>
                           <Button 
                             variant="outline" 
