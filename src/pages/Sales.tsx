@@ -41,35 +41,48 @@ const Sales = () => {
     setProducts(storedProducts);
   }, []);
   
-  // Load available coupons
+  // Load available coupons from localStorage
   React.useEffect(() => {
-    // In a real app, fetch from API/backend
-    const mockCoupons: Coupon[] = [
-      { 
-        code: 'DISCOUNT10', 
-        discountType: 'percentage', 
-        discountValue: 10,
-        maxDiscountLimit: 1000,
-        expiryDate: new Date('2025-12-31')
-      },
-      {
-        code: 'FLAT500',
-        discountType: 'flat',
-        discountValue: 500,
-        expiryDate: new Date('2025-12-31')
-      },
-      {
-        code: 'SUMMER20',
-        discountType: 'percentage',
-        discountValue: 20,
-        maxDiscountLimit: 2000,
-        expiryDate: new Date('2025-08-31')
-      }
-    ];
-    
-    // Filter to only show valid coupons
-    const validCoupons = mockCoupons.filter(coupon => new Date(coupon.expiryDate) > new Date());
-    setAvailableCoupons(validCoupons);
+    const savedCoupons = localStorage.getItem('coupons');
+    if (savedCoupons) {
+      const parsedCoupons = JSON.parse(savedCoupons);
+      // Convert date strings back to Date objects and filter valid coupons
+      const couponsWithDates = parsedCoupons.map((coupon: any) => ({
+        ...coupon,
+        expiryDate: new Date(coupon.expiryDate)
+      }));
+      
+      // Filter to only show valid and applicable coupons
+      const validCoupons = couponsWithDates.filter((coupon: Coupon) => {
+        const isNotExpired = new Date(coupon.expiryDate) > new Date();
+        const isApplicable = !coupon.targetType || coupon.targetType === 'all' || coupon.targetType === 'customer';
+        return isNotExpired && isApplicable;
+      });
+      
+      setAvailableCoupons(validCoupons);
+    } else {
+      // Fallback to default coupons if none exist in localStorage
+      const mockCoupons: Coupon[] = [
+        { 
+          code: 'DISCOUNT10', 
+          discountType: 'percentage', 
+          discountValue: 10,
+          maxDiscountLimit: 1000,
+          expiryDate: new Date('2025-12-31'),
+          targetType: 'all'
+        },
+        {
+          code: 'FLAT500',
+          discountType: 'flat',
+          discountValue: 500,
+          expiryDate: new Date('2025-12-31'),
+          targetType: 'all'
+        }
+      ];
+      
+      const validCoupons = mockCoupons.filter(coupon => new Date(coupon.expiryDate) > new Date());
+      setAvailableCoupons(validCoupons);
+    }
   }, []);
   
   // Filter products based on search

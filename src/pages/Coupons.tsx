@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Sidebar from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
@@ -32,21 +32,49 @@ import { CalendarIcon } from 'lucide-react';
 
 const Coupons = () => {
   const { toast } = useToast();
-  const [coupons, setCoupons] = useState<Coupon[]>([
-    {
-      code: 'SUMMER10',
-      discountType: 'percentage',
-      discountValue: 10,
-      maxDiscountLimit: 500,
-      expiryDate: new Date(2025, 5, 30) // June 30, 2025
-    },
-    {
-      code: 'WELCOME200',
-      discountType: 'flat',
-      discountValue: 200,
-      expiryDate: new Date(2025, 11, 31) // December 31, 2025
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  
+  // Load coupons from localStorage on component mount
+  useEffect(() => {
+    const savedCoupons = localStorage.getItem('coupons');
+    if (savedCoupons) {
+      const parsedCoupons = JSON.parse(savedCoupons);
+      // Convert date strings back to Date objects
+      const couponsWithDates = parsedCoupons.map((coupon: any) => ({
+        ...coupon,
+        expiryDate: new Date(coupon.expiryDate)
+      }));
+      setCoupons(couponsWithDates);
+    } else {
+      // Set default coupons if none exist
+      const defaultCoupons = [
+        {
+          code: 'SUMMER10',
+          discountType: 'percentage' as const,
+          discountValue: 10,
+          maxDiscountLimit: 500,
+          expiryDate: new Date(2025, 5, 30),
+          targetType: 'all' as const
+        },
+        {
+          code: 'WELCOME200',
+          discountType: 'flat' as const,
+          discountValue: 200,
+          expiryDate: new Date(2025, 11, 31),
+          targetType: 'all' as const
+        }
+      ];
+      setCoupons(defaultCoupons);
+      localStorage.setItem('coupons', JSON.stringify(defaultCoupons));
     }
-  ]);
+  }, []);
+  
+  // Save coupons to localStorage whenever coupons change
+  useEffect(() => {
+    if (coupons.length > 0) {
+      localStorage.setItem('coupons', JSON.stringify(coupons));
+    }
+  }, [coupons]);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -56,6 +84,8 @@ const Coupons = () => {
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [maxDiscountLimit, setMaxDiscountLimit] = useState<number | undefined>(undefined);
   const [expiryDate, setExpiryDate] = useState<Date | undefined>(undefined);
+  const [targetType, setTargetType] = useState<'all' | 'customer' | 'employee'>('all');
+  const [targetUserId, setTargetUserId] = useState('');
   
   const resetForm = () => {
     setCouponCode('');
@@ -63,6 +93,8 @@ const Coupons = () => {
     setDiscountValue(0);
     setMaxDiscountLimit(undefined);
     setExpiryDate(undefined);
+    setTargetType('all');
+    setTargetUserId('');
     setIsEditMode(false);
     setEditIndex(null);
   };
@@ -79,6 +111,8 @@ const Coupons = () => {
     setDiscountValue(coupon.discountValue);
     setMaxDiscountLimit(coupon.maxDiscountLimit);
     setExpiryDate(coupon.expiryDate);
+    setTargetType(coupon.targetType || 'all');
+    setTargetUserId(coupon.targetUserId || '');
     setIsEditMode(true);
     setEditIndex(index);
     setIsDialogOpen(true);
@@ -132,6 +166,15 @@ const Coupons = () => {
       return false;
     }
     
+    if ((targetType === 'customer' || targetType === 'employee') && !targetUserId.trim()) {
+      toast({
+        title: "Missing target user",
+        description: "Please enter a target user ID for user-specific coupons.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
     // Check if coupon code already exists (when adding new coupon)
     if (!isEditMode && coupons.some(c => c.code.toLowerCase() === couponCode.toLowerCase())) {
       toast({
@@ -153,7 +196,9 @@ const Coupons = () => {
       discountType,
       discountValue,
       maxDiscountLimit: discountType === 'percentage' ? maxDiscountLimit : undefined,
-      expiryDate: expiryDate!
+      expiryDate: expiryDate!,
+      targetType,
+      targetUserId: (targetType === 'customer' || targetType === 'employee') ? targetUserId : undefined
     };
     
     if (isEditMode && editIndex !== null) {
@@ -178,6 +223,17 @@ const Coupons = () => {
     
     setIsDialogOpen(false);
     resetForm();
+  };
+
+  const getTargetTypeLabel = (coupon: Coupon) => {
+    switch (coupon.targetType) {
+      case 'customer':
+        return `Customer: ${coupon.targetUserId}`;
+      case 'employee':
+        return `Employee: ${coupon.targetUserId}`;
+      default:
+        return 'All Users';
+    }
   };
 
   return (
@@ -212,6 +268,7 @@ const Coupons = () => {
                     <TableHead>Discount Type</TableHead>
                     <TableHead>Discount Value</TableHead>
                     <TableHead>Max Limit</TableHead>
+                    <TableHead>Target</TableHead>
                     <TableHead>Expiry Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -231,6 +288,9 @@ const Coupons = () => {
                       </TableCell>
                       <TableCell>
                         {coupon.maxDiscountLimit ? `₹${coupon.maxDiscountLimit}` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {getTargetTypeLabel(coupon)}
                       </TableCell>
                       <TableCell>
                         {format(new Date(coupon.expiryDate), 'dd MMM yyyy')}
@@ -346,6 +406,40 @@ const Coupons = () => {
                       />
                       <span className="ml-2">₹</span>
                     </div>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="targetType" className="text-right">
+                    Target Type
+                  </Label>
+                  <Select
+                    value={targetType}
+                    onValueChange={(value: any) => setTargetType(value)}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select target type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Users</SelectItem>
+                      <SelectItem value="customer">Specific Customer</SelectItem>
+                      <SelectItem value="employee">Specific Employee</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {(targetType === 'customer' || targetType === 'employee') && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="targetUserId" className="text-right">
+                      {targetType === 'customer' ? 'Customer ID' : 'Employee ID'}
+                    </Label>
+                    <Input
+                      id="targetUserId"
+                      placeholder={`Enter ${targetType} ID`}
+                      className="col-span-3"
+                      value={targetUserId}
+                      onChange={(e) => setTargetUserId(e.target.value)}
+                    />
                   </div>
                 )}
                 

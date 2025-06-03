@@ -97,6 +97,8 @@ export interface Coupon {
   discountValue: number;
   maxDiscountLimit?: number;
   expiryDate: Date;
+  targetType?: 'all' | 'customer' | 'employee';
+  targetUserId?: string;
 }
 
 // Role-based access control types - now a string to allow for custom roles
