@@ -109,7 +109,7 @@ const CustomerLogin = () => {
             </Button>
             <div className="mx-auto flex items-center gap-2">
               <Package className="h-6 w-6 text-agri-primary" />
-              <span className="text-lg font-bold">AgriPay</span>
+              <span className="text-lg font-bold">DostanFarms</span>
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-center">Customer Login</CardTitle>

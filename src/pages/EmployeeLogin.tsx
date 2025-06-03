@@ -69,7 +69,7 @@ const EmployeeLogin = () => {
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
             <Package className="h-6 w-6 text-agri-primary" />
-            <span className="text-lg font-bold">AgriPay</span>
+            <span className="text-lg font-bold">DostanFarms</span>
           </div>
           <CardTitle className="text-2xl font-bold">Employee Login</CardTitle>
         </CardHeader>

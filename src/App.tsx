@@ -25,6 +25,7 @@ import CustomerTicketHistory from './pages/CustomerTicketHistory';
 import FarmerDashboard from './pages/FarmerDashboard';
 import FarmerDetails from './pages/FarmerDetails';
 import FarmerTicketHistory from './pages/FarmerTicketHistory';
+import Dashboard from './pages/Dashboard';
 import Farmers from './pages/Farmers';
 import Products from './pages/Products';
 import Sales from './pages/Sales';
@@ -115,7 +116,7 @@ function App() {
             {/* Employee/Admin Dashboard routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute resource="dashboard" action="view">
-                <Farmers />
+                <Dashboard />
               </ProtectedRoute>
             } />
             <Route path="/farmers" element={

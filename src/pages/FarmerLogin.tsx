@@ -108,32 +108,13 @@ const FarmerLogin = () => {
     }, 1500);
   };
 
-  const handleTicketSubmit = (ticketData: Omit<Ticket, 'id'>) => {
-    // Generate a unique ID for the ticket
-    const newTicket: Ticket = {
-      ...ticketData,
-      id: uuidv4(),
-    };
-    
-    // In a real app, this would be an API call
-    // For now, save to localStorage
-    const existingTickets = JSON.parse(localStorage.getItem('tickets') || '[]');
-    const updatedTickets = [newTicket, ...existingTickets];
-    localStorage.setItem('tickets', JSON.stringify(updatedTickets));
-    
-    toast({
-      title: "Ticket Submitted",
-      description: "Your ticket has been submitted successfully. We'll get back to you soon.",
-    });
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
             <Package className="h-6 w-6 text-agri-primary" />
-            <span className="text-lg font-bold">AgriPay</span>
+            <span className="text-lg font-bold">DostanFarms</span>
           </div>
           <CardTitle className="text-2xl font-bold">Farmer Login</CardTitle>
         </CardHeader>
@@ -210,25 +191,6 @@ const FarmerLogin = () => {
             </form>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <div className="w-full">
-            <TicketDialog
-              userType="farmer"
-              userId="anonymous_farmer"
-              userName="Anonymous Farmer"
-              userContact={phone || "Not provided"}
-              onSubmit={handleTicketSubmit}
-            />
-          </div>
-          <Button
-            variant="link"
-            type="button"
-            onClick={() => navigate('/farmers')}
-            className="text-sm"
-          >
-            Go to Admin Dashboard
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
