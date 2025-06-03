@@ -39,8 +39,8 @@ import AccessDenied from './pages/AccessDenied';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <div className="min-h-screen bg-background">
           <Routes>
             {/* Public routes */}
@@ -174,8 +174,8 @@ function App() {
           </Routes>
         </div>
         <Toaster />
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
