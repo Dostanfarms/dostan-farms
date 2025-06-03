@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -281,14 +280,12 @@ const Products = () => {
                           <div className="mb-2">
                             <Barcode128 
                               value={product.barcode}
-                              options={{
-                                format: "CODE128",
-                                width: 2,
-                                height: 60,
-                                displayValue: true,
-                                fontSize: 12,
-                                margin: 10
-                              }}
+                              format="CODE128"
+                              width={2}
+                              height={60}
+                              displayValue={false}
+                              fontSize={12}
+                              margin={10}
                             />
                           </div>
                           <Button 
