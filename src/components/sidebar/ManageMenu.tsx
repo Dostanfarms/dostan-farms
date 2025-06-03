@@ -18,7 +18,8 @@ import {
   Settings,
   UserCog,
   Tag,
-  Ticket
+  Ticket,
+  BarChart3
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
@@ -46,8 +47,8 @@ const ManageMenu = () => {
       resource: 'products'
     },
     {
-      title: 'Add Sale',
-      icon: <ShoppingCart className="h-5 w-5" />,
+      title: 'Sales Dashboard',
+      icon: <BarChart3 className="h-5 w-5" />,
       path: '/sales',
       resource: 'sales'
     },

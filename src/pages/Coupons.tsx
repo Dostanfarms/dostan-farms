@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Sidebar from '@/components/Sidebar';
@@ -70,11 +69,10 @@ const Coupons = () => {
   }, []);
   
   // Save coupons to localStorage whenever coupons change
-  useEffect(() => {
-    if (coupons.length > 0) {
-      localStorage.setItem('coupons', JSON.stringify(coupons));
-    }
-  }, [coupons]);
+  const saveCouponsToStorage = (updatedCoupons: Coupon[]) => {
+    localStorage.setItem('coupons', JSON.stringify(updatedCoupons));
+    setCoupons(updatedCoupons);
+  };
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -121,7 +119,7 @@ const Coupons = () => {
   const handleDelete = (index: number) => {
     const updatedCoupons = [...coupons];
     updatedCoupons.splice(index, 1);
-    setCoupons(updatedCoupons);
+    saveCouponsToStorage(updatedCoupons);
     
     toast({
       title: "Coupon deleted",
@@ -205,7 +203,7 @@ const Coupons = () => {
       // Update existing coupon
       const updatedCoupons = [...coupons];
       updatedCoupons[editIndex] = couponData;
-      setCoupons(updatedCoupons);
+      saveCouponsToStorage(updatedCoupons);
       
       toast({
         title: "Coupon updated",
@@ -213,7 +211,8 @@ const Coupons = () => {
       });
     } else {
       // Add new coupon
-      setCoupons([...coupons, couponData]);
+      const updatedCoupons = [...coupons, couponData];
+      saveCouponsToStorage(updatedCoupons);
       
       toast({
         title: "Coupon created",
