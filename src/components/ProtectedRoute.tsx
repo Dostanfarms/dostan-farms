@@ -6,9 +6,10 @@ import { useAuth } from '../context/AuthContext';
 interface ProtectedRouteProps {
   resource: string;
   action: 'view' | 'create' | 'edit' | 'delete';
+  children?: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ resource, action }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ resource, action, children }) => {
   const { currentUser, checkPermission } = useAuth();
 
   console.log('ProtectedRoute check:', { 
@@ -31,7 +32,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ resource, action }) => 
     return <Navigate to="/access-denied" replace />;
   }
 
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;
