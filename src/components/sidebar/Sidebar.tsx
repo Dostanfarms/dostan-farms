@@ -23,7 +23,7 @@ export const Sidebar = () => {
           <div className="flex items-center px-4 gap-2 justify-between">
             <div className="flex items-center gap-2">
               <Package className="h-6 w-6 text-agri-primary" />
-              <span className="text-lg font-bold">AgriPay Admin</span>
+              <span className="text-lg font-bold">Dostanfarms Admin</span>
             </div>
             <SidebarTrigger>
               <Menu className="h-5 w-5" />

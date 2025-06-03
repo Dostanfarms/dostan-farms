@@ -94,10 +94,6 @@ const SalesDashboard = () => {
     }
     
     setIsQuantityDialogOpen(false);
-    toast({
-      title: "Added to cart",
-      description: `${quantityToAdd} ${selectedProduct.unit} of ${selectedProduct.name} added to cart`,
-    });
   };
 
   const updateCartItemQuantity = (index: number, newQuantity: number) => {
@@ -220,7 +216,7 @@ const SalesDashboard = () => {
 
   const generateUpiPaymentUri = () => {
     const total = calculateTotal();
-    return `upi://pay?pa=2755c@ybl&pn=AgriPayStore&am=${total.toFixed(2)}&cu=INR&tn=Purchase at AgriPay Store`;
+    return `upi://pay?pa=2755c@ybl&pn=DostanfarmsStore&am=${total.toFixed(2)}&cu=INR&tn=Purchase at Dostanfarms Store`;
   };
 
   const renderPaymentOptions = () => {
@@ -701,7 +697,7 @@ const SalesDashboard = () => {
             
             <div className="border rounded-md p-4" ref={receiptRef}>
               <div className="text-center mb-4">
-                <h3 className="font-bold text-lg">AgriPay Store</h3>
+                <h3 className="font-bold text-lg">Dostanfarms Store</h3>
                 <p className="text-sm text-muted-foreground">Receipt #{Math.floor(Math.random() * 1000000)}</p>
                 <p className="text-sm text-muted-foreground">{new Date().toLocaleString()}</p>
               </div>

@@ -274,27 +274,27 @@ const Products = () => {
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="space-y-4">
-                      {/* Real Barcode Display */}
+                      {/* Adjusted Barcode Display */}
                       {product.barcode && (
-                        <div className="text-center p-4 bg-white rounded-lg border">
+                        <div className="text-center p-2 bg-white rounded-lg border">
                           <div className="mb-2">
                             <Barcode128 
                               value={product.barcode}
                               format="CODE128"
-                              width={2}
-                              height={60}
-                              displayValue={false}
-                              fontSize={12}
-                              margin={10}
+                              width={1.5}
+                              height={40}
+                              displayValue={true}
+                              fontSize={10}
+                              margin={5}
                             />
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => printBarcode(product)}
-                            className="w-full"
+                            className="w-full mt-2"
                           >
-                            <Printer className="h-4 w-4 mr-2" /> Print Barcode
+                            <Printer className="h-4 w-4 mr-2" /> Print
                           </Button>
                         </div>
                       )}
