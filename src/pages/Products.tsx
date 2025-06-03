@@ -9,10 +9,11 @@ import Sidebar from '@/components/Sidebar';
 import ProductForm from '@/components/ProductForm';
 import { mockFarmers } from '@/utils/mockData';
 import { Product } from '@/utils/types';
-import { Search, Plus, Package, Edit, Tag, Barcode, Printer } from 'lucide-react';
+import { Search, Plus, Package, Edit, Tag, Barcode, Printer, ScanLine } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { saveProductsToLocalStorage, getProductsFromLocalStorage } from '@/utils/employeeData';
 import { useToast } from '@/hooks/use-toast';
+import Barcode128 from 'react-barcode-generator';
 
 const Products = () => {
   const { toast } = useToast();
@@ -21,6 +22,8 @@ const Products = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('1');
+  const [scannedBarcode, setScannedBarcode] = useState('');
+  const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   
   // Load products from localStorage on component mount
   useEffect(() => {
@@ -59,6 +62,34 @@ const Products = () => {
     setIsDialogOpen(true);
   };
 
+  const handleBarcodeSearch = () => {
+    if (!scannedBarcode.trim()) {
+      toast({
+        title: "Please enter a barcode",
+        description: "Enter or scan a barcode to search for products",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const foundProduct = products.find(product => product.barcode === scannedBarcode.trim());
+    
+    if (foundProduct) {
+      setScannedProduct(foundProduct);
+      toast({
+        title: "Product Found!",
+        description: `Found: ${foundProduct.name}`,
+      });
+    } else {
+      setScannedProduct(null);
+      toast({
+        title: "Product Not Found",
+        description: "No product found with this barcode",
+        variant: "destructive"
+      });
+    }
+  };
+
   const printBarcode = (product: Product) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
@@ -79,18 +110,16 @@ const Products = () => {
                 padding: 20px; 
                 display: inline-block; 
                 background: white;
+                max-width: 400px;
               }
               .product-name { 
                 font-size: 18px; 
                 font-weight: bold; 
                 margin-bottom: 15px; 
               }
-              .barcode { 
-                font-family: 'Courier New', monospace; 
-                font-size: 24px; 
-                font-weight: bold; 
-                letter-spacing: 2px; 
-                margin: 10px 0; 
+              .barcode-image { 
+                margin: 15px 0;
+                max-width: 100%;
               }
               .unit { 
                 font-size: 16px; 
@@ -101,20 +130,30 @@ const Products = () => {
                 .barcode-container { border: 2px solid #000; }
               }
             </style>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
           </head>
           <body>
             <div class="barcode-container">
               <div class="product-name">${product.name}</div>
-              <div class="barcode">${product.barcode}</div>
+              <svg id="barcode" class="barcode-image"></svg>
               <div class="unit">${product.unit}</div>
             </div>
+            <script>
+              JsBarcode("#barcode", "${product.barcode}", {
+                format: "CODE128",
+                width: 2,
+                height: 80,
+                displayValue: true
+              });
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
+            </script>
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
       
       toast({
         title: "Barcode printed",
@@ -169,6 +208,42 @@ const Products = () => {
               </Dialog>
             </div>
           </div>
+
+          {/* Barcode Scanner Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ScanLine className="h-5 w-5" />
+                Barcode Scanner
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-3 mb-4">
+                <Input
+                  placeholder="Enter or scan barcode..."
+                  value={scannedBarcode}
+                  onChange={(e) => setScannedBarcode(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleBarcodeSearch()}
+                  className="flex-1"
+                />
+                <Button onClick={handleBarcodeSearch} className="bg-agri-primary hover:bg-agri-secondary">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+              </div>
+              
+              {scannedProduct && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h3 className="font-semibold text-green-800 mb-2">Product Found:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div><strong>Name:</strong> {scannedProduct.name}</div>
+                    <div><strong>Unit:</strong> {scannedProduct.unit}</div>
+                    <div><strong>Price:</strong> ₹{scannedProduct.pricePerUnit}</div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           
           {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-lg">
@@ -194,23 +269,27 @@ const Products = () => {
               {filteredProducts.map((product) => (
                 <Card key={product.id} className="overflow-hidden">
                   <CardHeader className="bg-muted pb-2">
-                    <CardTitle className="text-lg flex justify-between items-start">
-                      <span>{product.name}</span>
-                      <Badge variant="outline" className="bg-agri-primary/10">
-                        <Tag className="h-3 w-3 mr-1" /> {product.category}
-                      </Badge>
+                    <CardTitle className="text-lg">
+                      {product.name}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="space-y-4">
-                      {/* Barcode Display - Large and Prominent */}
+                      {/* Real Barcode Display */}
                       {product.barcode && (
-                        <div className="text-center p-6 bg-gray-50 rounded-lg border-2 border-dashed">
-                          <div className="flex justify-center items-center gap-2 mb-4">
-                            <Barcode className="h-6 w-6 text-gray-600" />
-                          </div>
-                          <div className="font-mono text-3xl font-bold text-center mb-4 tracking-wider bg-white p-4 border-2 border-black">
-                            |||||| |||| |||||| |||| ||||||
+                        <div className="text-center p-4 bg-white rounded-lg border">
+                          <div className="mb-2">
+                            <Barcode128 
+                              value={product.barcode}
+                              options={{
+                                format: "CODE128",
+                                width: 2,
+                                height: 60,
+                                displayValue: true,
+                                fontSize: 12,
+                                margin: 10
+                              }}
+                            />
                           </div>
                           <Button 
                             variant="outline" 
