@@ -1,56 +1,120 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { 
+  BarChart3, 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  UserCheck, 
+  Receipt, 
+  Ticket,
+  Gift
+} from 'lucide-react';
 import { 
   SidebarGroup, 
   SidebarGroupContent, 
-  SidebarMenuItem, 
   SidebarMenu, 
-  SidebarMenuButton,
-  useSidebar
+  SidebarMenuButton, 
+  SidebarMenuItem 
 } from '@/components/ui/sidebar';
-import { Home, Users } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { useSidebar } from '@/components/ui/sidebar';
 
 const TopLevelMenu = () => {
+  const { checkPermission } = useAuth();
   const location = useLocation();
   const { setOpenMobile } = useSidebar();
 
-  const topLevelItems = [
+  const handleLinkClick = () => {
+    setOpenMobile(false);
+  };
+
+  const getNavClass = (path: string) => {
+    const isActive = location.pathname === path;
+    return isActive 
+      ? "bg-muted text-primary font-medium" 
+      : "hover:bg-muted/50";
+  };
+
+  const menuItems = [
     {
-      title: 'Dashboard',
-      icon: <Home className="h-5 w-5" />,
-      path: '/dashboard'
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: BarChart3,
+      resource: "dashboard",
+      action: "view" as const
     },
     {
-      title: 'Farmers',
-      icon: <Users className="h-5 w-5" />,
-      path: '/farmers'
+      title: "Products",
+      url: "/products",
+      icon: Package,
+      resource: "products",
+      action: "view" as const
+    },
+    {
+      title: "Sales Dashboard",
+      url: "/sales-dashboard",
+      icon: ShoppingCart,
+      resource: "sales",
+      action: "view" as const
+    },
+    {
+      title: "Sales",
+      url: "/sales",
+      icon: Receipt,
+      resource: "sales",
+      action: "view" as const
+    },
+    {
+      title: "Customers",
+      url: "/customers",
+      icon: Users,
+      resource: "customers",
+      action: "view" as const
+    },
+    {
+      title: "Farmers",
+      url: "/farmers",
+      icon: UserCheck,
+      resource: "farmers",
+      action: "view" as const
+    },
+    {
+      title: "Tickets",
+      url: "/tickets",
+      icon: Ticket,
+      resource: "tickets",
+      action: "view" as const
+    },
+    {
+      title: "Coupons",
+      url: "/coupons",
+      icon: Gift,
+      resource: "coupons",
+      action: "view" as const
     }
   ];
 
-  const handleLinkClick = (path: string) => {
-    if (path === '/sales' || path === '/dashboard') {
-      setOpenMobile(false);
-    }
-  };
+  const visibleMenuItems = menuItems.filter(item => 
+    checkPermission(item.resource, item.action)
+  );
 
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
-          {topLevelItems.map((item) => (
-            <SidebarMenuItem key={item.path}>
+          {visibleMenuItems.map((item) => (
+            <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <Link 
-                  to={item.path} 
-                  className={`flex items-center gap-3 py-2 px-3 rounded-md ${
-                    location.pathname === item.path ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-muted'
-                  }`}
-                  onClick={() => handleLinkClick(item.path)}
+                <NavLink 
+                  to={item.url} 
+                  className={getNavClass(item.url)}
+                  onClick={handleLinkClick}
                 >
-                  {item.icon}
+                  <item.icon className="mr-2 h-4 w-4" />
                   <span>{item.title}</span>
-                </Link>
+                </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

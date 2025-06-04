@@ -1,694 +1,467 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
-} from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Package, 
-  ArrowLeft, 
-  CreditCard,
-  Trash2,
-  Plus,
-  Minus,
-  Printer,
-  Tag
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { CartItem } from '@/utils/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ArrowLeft, CreditCard, Smartphone, IndianRupee, Tag } from 'lucide-react';
+import QRCode from 'react-qr-code';
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
+interface Coupon {
+  id: string;
+  code: string;
+  discount: number;
+  type: 'percentage' | 'fixed';
+  minAmount: number;
+  maxDiscount?: number;
+  description: string;
+  isActive: boolean;
+  expiryDate: string;
+}
 
 const PaymentPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const printReceiptRef = useRef<HTMLDivElement>(null);
   
-  // Customer Info State
+  const { cartItems = [], total = 0 } = location.state || {};
+  
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('upi');
+  const [cashAmount, setCashAmount] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerMobile, setCustomerMobile] = useState('');
-  const [customerInfoDialogOpen, setCustomerInfoDialogOpen] = useState(false);
-  
-  // Load cart items from localStorage
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('customerCart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
-
-  // Coupon states
-  const [activeCoupons, setActiveCoupons] = useState<any[]>([]);
-  const [couponDialogOpen, setCouponDialogOpen] = useState(false);
-  const [selectedCoupon, setSelectedCoupon] = useState<any | null>(null);
   const [couponCode, setCouponCode] = useState('');
-  const [discount, setDiscount] = useState(0);
-
-  // Load active coupons on component mount
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+  const [finalTotal, setFinalTotal] = useState(total);
+  
+  // Load coupons from localStorage
   useEffect(() => {
-    const coupons = getActiveCoupons();
-    setActiveCoupons(coupons);
-  }, []);
-
-  // Payment states
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
-  
-  // Load active coupons from localStorage
-  const getActiveCoupons = () => {
-    const coupons = JSON.parse(localStorage.getItem('coupons') || '[]');
-    return coupons.filter((coupon: any) => {
-      const now = new Date();
-      const expiryDate = new Date(coupon.expiryDate);
-      return expiryDate > now; // Only return active (non-expired) coupons
-    });
-  };
-  
-  // Functions to update cart
-  const increaseQuantity = (productId: string) => {
-    setCartItems(prev => 
-      prev.map(item => 
-        item.productId === productId 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
-    );
-    localStorage.setItem('customerCart', JSON.stringify(cartItems));
-  };
-  
-  const decreaseQuantity = (productId: string) => {
-    setCartItems(prev => 
-      prev.map(item => 
-        item.productId === productId && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-    );
-    localStorage.setItem('customerCart', JSON.stringify(cartItems));
-  };
-  
-  const removeItem = (productId: string) => {
-    setCartItems(prev => prev.filter(item => item.productId !== productId));
-    localStorage.setItem('customerCart', JSON.stringify(
-      cartItems.filter(item => item.productId !== productId)
-    ));
-  };
-  
-  // Calculate subtotal, taxes and total
-  const subtotal = cartItems.reduce((total, item) => 
-    total + (item.quantity * item.pricePerUnit), 0);
-  
-  const taxRate = 0.05; // 5% tax
-  const taxAmount = subtotal * taxRate;
-  const deliveryFee = 30; // Fixed delivery fee
-  const total = subtotal + taxAmount + deliveryFee - discount;
-
-  // Apply selected coupon 
-  const applyCoupon = (coupon: any) => {
-    if (!coupon) return;
-    
-    let discountAmount = 0;
-    
-    if (coupon.discountType === 'flat') {
-      discountAmount = coupon.discountValue;
-    } else if (coupon.discountType === 'percentage') {
-      discountAmount = (subtotal * coupon.discountValue) / 100;
-      if (coupon.maxDiscountLimit) {
-        discountAmount = Math.min(discountAmount, coupon.maxDiscountLimit);
+    const storedCoupons = localStorage.getItem('coupons');
+    if (storedCoupons) {
+      try {
+        const coupons = JSON.parse(storedCoupons);
+        const activeCoupons = coupons.filter((coupon: Coupon) => coupon.isActive);
+        setAvailableCoupons(activeCoupons);
+      } catch (error) {
+        console.error('Error loading coupons:', error);
       }
     }
+  }, []);
+
+  // Recalculate total when coupon is applied
+  useEffect(() => {
+    if (appliedCoupon) {
+      let discount = 0;
+      if (appliedCoupon.type === 'percentage') {
+        discount = (total * appliedCoupon.discount) / 100;
+        if (appliedCoupon.maxDiscount) {
+          discount = Math.min(discount, appliedCoupon.maxDiscount);
+        }
+      } else {
+        discount = appliedCoupon.discount;
+      }
+      setFinalTotal(Math.max(0, total - discount));
+    } else {
+      setFinalTotal(total);
+    }
+  }, [appliedCoupon, total]);
+
+  const applyCoupon = () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Enter coupon code",
+        description: "Please enter a coupon code to apply",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const coupon = availableCoupons.find(c => c.code.toLowerCase() === couponCode.toLowerCase());
     
-    setSelectedCoupon(coupon);
-    setCouponCode(coupon.code);
-    setDiscount(discountAmount);
-    setCouponDialogOpen(false);
-    
+    if (!coupon) {
+      toast({
+        title: "Invalid coupon",
+        description: "The coupon code you entered is not valid or has expired",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (total < coupon.minAmount) {
+      toast({
+        title: "Minimum amount not met",
+        description: `This coupon requires a minimum order amount of ₹${coupon.minAmount}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAppliedCoupon(coupon);
     toast({
-      title: "Coupon applied",
-      description: `₹${discountAmount.toFixed(2)} discount has been applied to your order`
+      title: "Coupon applied!",
+      description: `${coupon.description} has been applied to your order`,
     });
   };
 
-  // Apply coupon by code
-  const applyCouponByCode = () => {
-    if (!couponCode.trim()) {
-      toast({
-        title: "Missing coupon code",
-        description: "Please enter a coupon code",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const coupon = activeCoupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase());
-    
-    if (coupon) {
-      applyCoupon(coupon);
-    } else {
-      toast({
-        title: "Invalid coupon",
-        description: "The coupon code you entered is invalid or expired",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  // Print receipt function
-  const printReceipt = () => {
-    if (!orderId) return;
-    
-    const printWindow = window.open('', '_blank');
-    
-    if (printWindow) {
-      const currentDate = new Date().toLocaleString();
-      
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Receipt #${orderId}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 20px;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            .receipt {
-              border: 1px solid #ddd;
-              padding: 20px;
-              margin-bottom: 20px;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 20px;
-              border-bottom: 1px solid #eee;
-              padding-bottom: 10px;
-            }
-            .customer-info {
-              margin-bottom: 20px;
-              padding: 10px;
-              background-color: #f9f9f9;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            th, td {
-              padding: 8px;
-              text-align: left;
-              border-bottom: 1px solid #ddd;
-            }
-            .totals {
-              margin-top: 20px;
-              text-align: right;
-            }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              font-size: 12px;
-              color: #777;
-            }
-            @media print {
-              .no-print {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="receipt">
-            <div class="header">
-              <h1>DostanFarms</h1>
-              <p>Order Receipt</p>
-              <p>Order #${orderId}</p>
-              <p>${currentDate}</p>
-            </div>
-            
-            <div class="customer-info">
-              <h3>Customer Information</h3>
-              <p><strong>Name:</strong> ${customerName}</p>
-              <p><strong>Phone:</strong> ${customerMobile}</p>
-              <p><strong>Payment Method:</strong> ${paymentMethod === 'cash' ? 'Cash on Delivery' : 'Online Payment'}</p>
-            </div>
-            
-            <h3>Order Details</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${cartItems.map(item => `
-                  <tr>
-                    <td>${item.name}</td>
-                    <td>${item.quantity} ${item.unit}</td>
-                    <td>₹${item.pricePerUnit}</td>
-                    <td>₹${item.quantity * item.pricePerUnit}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-            <div class="totals">
-              <p><strong>Subtotal:</strong> ₹${subtotal.toFixed(2)}</p>
-              <p><strong>Tax (5%):</strong> ₹${taxAmount.toFixed(2)}</p>
-              <p><strong>Delivery Fee:</strong> ₹${deliveryFee.toFixed(2)}</p>
-              ${discount > 0 ? `<p><strong>Discount:</strong> -₹${discount.toFixed(2)}</p>` : ''}
-              <h3>Total: ₹${total.toFixed(2)}</h3>
-            </div>
-            
-            <div class="footer">
-              <p>Thank you for shopping with DostanFarms!</p>
-              <p>For any queries, please contact support@dostanfarms.com</p>
-            </div>
-          </div>
-          
-          <div class="no-print" style="text-align: center; margin-top: 20px;">
-            <button onclick="window.print();" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
-              Print Receipt
-            </button>
-          </div>
-        </body>
-        </html>
-      `);
-      
-      printWindow.document.close();
-    } else {
-      toast({
-        title: "Error",
-        description: "Could not open print window. Please check your browser settings.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  // Handle checkout
-  const handleCheckout = () => {
-    if (cartItems.length === 0) {
-      toast({
-        title: "Empty cart",
-        description: "Your cart is empty",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!customerName.trim() || !customerMobile.trim()) {
-      setCustomerInfoDialogOpen(true);
-      return;
-    }
-    
-    setIsProcessing(true);
-    
-    // Simulate checkout process
-    setTimeout(() => {
-      const newOrderId = `ORD${Math.floor(100000 + Math.random() * 900000)}`;
-      setOrderId(newOrderId);
-      
-      const order = {
-        id: newOrderId,
-        customerName,
-        customerMobile,
-        items: cartItems.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.quantity * item.pricePerUnit
-        })),
-        totalAmount: total,
-        status: 'placed',
-        date: new Date().toISOString(),
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        paymentMethod,
-        discount: discount,
-        couponCode: selectedCoupon?.code || ''
-      };
-      
-      // Store order
-      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-      orders.push(order);
-      localStorage.setItem('orders', JSON.stringify(orders));
-      
-      // Clear cart
-      localStorage.setItem('customerCart', JSON.stringify([]));
-      
-      setIsProcessing(false);
-      
-      toast({
-        title: "Order placed successfully",
-        description: `Your order #${order.id} has been placed`
-      });
-      
-      // Navigate to order receipt
-      navigate(`/order-receipt/${order.id}`);
-    }, 2000);
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    toast({
+      title: "Coupon removed",
+      description: "The coupon has been removed from your order",
+    });
   };
 
-  // Customer info dialog component
-  const CustomerInfoDialog = () => (
-    <Dialog open={customerInfoDialogOpen} onOpenChange={setCustomerInfoDialogOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Customer Information</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="dialog-customer-name">Customer Name</Label>
-            <Input
-              id="dialog-customer-name"
-              placeholder="Enter customer name"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dialog-customer-mobile">Mobile Number</Label>
-            <Input
-              id="dialog-customer-mobile"
-              placeholder="Enter mobile number"
-              value={customerMobile}
-              onChange={(e) => setCustomerMobile(e.target.value)}
-            />
-          </div>
-          <Button 
-            className="w-full bg-agri-primary hover:bg-agri-secondary"
-            onClick={() => {
-              if (customerName.trim() && customerMobile.trim()) {
-                setCustomerInfoDialogOpen(false);
-                handleCheckout();
-              } else {
-                toast({
-                  title: "Missing information",
-                  description: "Please provide both customer name and mobile number",
-                  variant: "destructive"
-                });
-              }
-            }}
-          >
-            Continue to Checkout
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  const getDiscountAmount = () => {
+    if (!appliedCoupon) return 0;
+    
+    let discount = 0;
+    if (appliedCoupon.type === 'percentage') {
+      discount = (total * appliedCoupon.discount) / 100;
+      if (appliedCoupon.maxDiscount) {
+        discount = Math.min(discount, appliedCoupon.maxDiscount);
+      }
+    } else {
+      discount = appliedCoupon.discount;
+    }
+    return discount;
+  };
 
-  // Coupon selection dialog component
-  const CouponSelectionDialog = () => (
-    <Dialog open={couponDialogOpen} onOpenChange={setCouponDialogOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Available Coupons</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="max-h-[300px]">
-          {activeCoupons.length > 0 ? (
-            <div className="space-y-3">
-              {activeCoupons.map((coupon) => (
-                <Card key={coupon.id} className="cursor-pointer hover:bg-muted/50" onClick={() => applyCoupon(coupon)}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-bold">{coupon.code}</h3>
-                        <p className="text-sm text-muted-foreground">{coupon.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-green-600">
-                          {coupon.discountType === 'percentage' 
-                            ? `${coupon.discountValue}% OFF` 
-                            : `₹${coupon.discountValue} OFF`}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Expires: {new Date(coupon.expiryDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center py-4 text-muted-foreground">No active coupons available</p>
-          )}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
-  
-  return (
-    <ScrollArea className="min-h-screen h-full">
-      <div className="min-h-screen bg-muted/30 p-4">
-        <header className="container mx-auto max-w-md mb-6">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => navigate('/cart')}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Back</span>
+  const handlePayment = () => {
+    // Validate customer info
+    if (!customerName.trim()) {
+      toast({
+        title: "Customer name required",
+        description: "Please enter the customer's name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!customerMobile.trim() || !/^[6-9]\d{9}$/.test(customerMobile)) {
+      toast({
+        title: "Valid mobile number required",
+        description: "Please enter a valid 10-digit mobile number",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (paymentMethod === 'cash') {
+      const cash = parseFloat(cashAmount);
+      if (isNaN(cash) || cash < finalTotal) {
+        toast({
+          title: "Insufficient cash",
+          description: "Please enter a valid cash amount",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Process payment
+    const orderData = {
+      id: `order-${Date.now()}`,
+      items: cartItems,
+      customer: {
+        name: customerName,
+        mobile: customerMobile
+      },
+      subtotal: total,
+      coupon: appliedCoupon,
+      discount: getDiscountAmount(),
+      total: finalTotal,
+      paymentMethod,
+      cashReceived: paymentMethod === 'cash' ? parseFloat(cashAmount) : finalTotal,
+      change: paymentMethod === 'cash' ? parseFloat(cashAmount) - finalTotal : 0,
+      timestamp: new Date().toISOString(),
+      status: 'completed'
+    };
+
+    // Save order to localStorage
+    const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+    existingOrders.push(orderData);
+    localStorage.setItem('orders', JSON.stringify(existingOrders));
+
+    // Navigate to receipt page
+    navigate('/order-receipt', { 
+      state: { orderData },
+      replace: true 
+    });
+
+    toast({
+      title: "Payment successful",
+      description: `Order completed successfully. Total: ₹${finalTotal.toFixed(2)}`,
+    });
+  };
+
+  const generateUpiPaymentUri = () => {
+    return `upi://pay?pa=2755c@ybl&pn=DostanfarmsStore&am=${finalTotal.toFixed(2)}&cu=INR&tn=Order payment for ${customerName}`;
+  };
+
+  if (!cartItems || cartItems.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-semibold mb-2">No items to pay for</h2>
+            <p className="text-muted-foreground mb-4">Your cart is empty</p>
+            <Button onClick={() => navigate('/customer-home')}>
+              Continue Shopping
             </Button>
-            <div className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-agri-primary" />
-              <span className="text-lg font-bold">DostanFarms</span>
-            </div>
-          </div>
-        </header>
-        
-        <div className="container mx-auto max-w-md">
-          {/* Customer Information Card */}
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Customer Information
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setCustomerInfoDialogOpen(true)}
-                >
-                  {customerName && customerMobile ? 'Edit' : 'Add'}
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {customerName && customerMobile ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-muted-foreground">Name:</span>
-                    <span>{customerName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Mobile:</span>
-                    <span>{customerMobile}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p>No customer information added</p>
-                  <p className="text-xs">Click 'Add' to enter customer details</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-          {/* Coupon Card */}
-          <Card className="mb-4">
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="text-2xl font-bold">Payment</h1>
+        </div>
+
+        <div className="space-y-6">
+          {/* Customer Information */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Tag className="h-5 w-5" />
-                  <span>Apply Coupon</span>
-                </div>
-                {activeCoupons.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCouponDialogOpen(true)}
-                  >
-                    Browse Coupons
-                  </Button>
-                )}
-              </CardTitle>
+              <CardTitle>Customer Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter coupon code"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === 'Enter' && applyCouponByCode()}
-                />
-                <Button
-                  variant="outline"
-                  onClick={applyCouponByCode}
-                >
-                  Apply
-                </Button>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="customerName">Customer Name *</Label>
+                  <Input
+                    id="customerName"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Enter customer name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customerMobile">Mobile Number *</Label>
+                  <Input
+                    id="customerMobile"
+                    value={customerMobile}
+                    onChange={(e) => setCustomerMobile(e.target.value)}
+                    placeholder="Enter 10-digit mobile number"
+                    maxLength={10}
+                    required
+                  />
+                </div>
               </div>
-              {selectedCoupon && (
-                <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{selectedCoupon.code} applied</p>
-                      <p className="text-xs text-muted-foreground">{selectedCoupon.description}</p>
-                    </div>
-                    <p className="text-green-600 font-semibold">-₹{discount.toFixed(2)}</p>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>Order Summary</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {cartItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Your cart is empty</p>
-                </div>
-              ) : (
-                <ul className="divide-y">
-                  {cartItems.map((item) => (
-                    <li key={item.productId} className="p-4">
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium">{item.name}</span>
-                        <span>₹{item.pricePerUnit}/{item.unit}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => decreaseQuantity(item.productId)}
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span>{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => increaseQuantity(item.productId)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-medium">₹{item.quantity * item.pricePerUnit}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-red-500"
-                            onClick={() => removeItem(item.productId)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle>Payment Method</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={paymentMethod}
-                onValueChange={(value: 'cash' | 'online') => setPaymentMethod(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash on Delivery</SelectItem>
-                  <SelectItem value="online">Online Payment</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-          
+          {/* Apply Coupons */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                <span>Payment Details</span>
+                <Tag className="h-5 w-5" />
+                Apply Coupon
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tax (5%)</span>
-                <span>₹{taxAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Delivery Fee</span>
-                <span>₹{deliveryFee}</span>
-              </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount</span>
-                  <span>-₹{discount.toFixed(2)}</span>
+            <CardContent className="space-y-4">
+              {!appliedCoupon ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Enter coupon code"
+                    className="flex-1"
+                  />
+                  <Button onClick={applyCoupon} variant="outline">
+                    Apply
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div>
+                    <div className="font-medium text-green-800">{appliedCoupon.code}</div>
+                    <div className="text-sm text-green-600">{appliedCoupon.description}</div>
+                    <div className="text-sm text-green-600">
+                      Discount: ₹{getDiscountAmount().toFixed(2)}
+                    </div>
+                  </div>
+                  <Button onClick={removeCoupon} variant="outline" size="sm">
+                    Remove
+                  </Button>
                 </div>
               )}
-              <div className="flex justify-between font-bold pt-2 border-t mt-2">
-                <span>Total</span>
-                <span>₹{total.toFixed(2)}</span>
+
+              {availableCoupons.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium">Available Coupons:</Label>
+                  <div className="grid gap-2 mt-2">
+                    {availableCoupons.slice(0, 3).map((coupon) => (
+                      <div key={coupon.id} className="p-2 border rounded-lg bg-blue-50">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <Badge variant="secondary" className="text-xs">{coupon.code}</Badge>
+                            <div className="text-xs text-muted-foreground mt-1">{coupon.description}</div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setCouponCode(coupon.code);
+                              applyCoupon();
+                            }}
+                            disabled={total < coupon.minAmount}
+                          >
+                            Apply
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Order Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {cartItems.map((item: CartItem) => (
+                  <div key={item.id} className="flex justify-between">
+                    <span>{item.name} x {item.quantity}</span>
+                    <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+                
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>₹{total.toFixed(2)}</span>
+                  </div>
+                  
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>-₹{getDiscountAmount().toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span>₹{finalTotal.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
-            <CardFooter className="flex-col gap-2">
-              <Button
-                className="w-full bg-agri-primary hover:bg-agri-secondary"
-                onClick={handleCheckout}
-                disabled={isProcessing || cartItems.length === 0}
-              >
-                {isProcessing ? "Processing..." : "Place Order"}
-              </Button>
-              
-              {orderId && (
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center gap-2"
-                  onClick={printReceipt}
-                >
-                  <Printer className="h-4 w-4" />
-                  Print Receipt
-                </Button>
-              )}
-            </CardFooter>
           </Card>
-          
-          <div className="hidden" ref={printReceiptRef}></div>
+
+          {/* Payment Methods */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Method</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <Button
+                  variant={paymentMethod === 'upi' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('upi')}
+                  className="flex flex-col items-center p-4 h-auto"
+                >
+                  <Smartphone className="h-6 w-6 mb-2" />
+                  <span className="text-sm">UPI</span>
+                </Button>
+                
+                <Button
+                  variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('cash')}
+                  className="flex flex-col items-center p-4 h-auto"
+                >
+                  <IndianRupee className="h-6 w-6 mb-2" />
+                  <span className="text-sm">Cash</span>
+                </Button>
+                
+                <Button
+                  variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('card')}
+                  className="flex flex-col items-center p-4 h-auto"
+                >
+                  <CreditCard className="h-6 w-6 mb-2" />
+                  <span className="text-sm">Card</span>
+                </Button>
+              </div>
+
+              {paymentMethod === 'upi' && (
+                <div className="text-center space-y-4">
+                  <div className="bg-white p-4 rounded-lg border inline-block">
+                    <QRCode value={generateUpiPaymentUri()} size={200} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Scan QR code with any UPI app to pay ₹{finalTotal.toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              {paymentMethod === 'cash' && (
+                <div className="space-y-2">
+                  <Label htmlFor="cashAmount">Cash Received</Label>
+                  <Input
+                    id="cashAmount"
+                    type="number"
+                    value={cashAmount}
+                    onChange={(e) => setCashAmount(e.target.value)}
+                    placeholder="Enter cash amount"
+                    min={finalTotal}
+                    step="0.01"
+                  />
+                  {cashAmount && parseFloat(cashAmount) >= finalTotal && (
+                    <div className="text-sm text-muted-foreground">
+                      Change: ₹{(parseFloat(cashAmount) - finalTotal).toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {paymentMethod === 'card' && (
+                <div className="text-center p-8 bg-muted rounded-lg">
+                  <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Please insert or swipe the card on the terminal
+                  </p>
+                  <p className="text-lg font-semibold mt-2">₹{finalTotal.toFixed(2)}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Button 
+            onClick={handlePayment} 
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+            size="lg"
+          >
+            Complete Payment - ₹{finalTotal.toFixed(2)}
+          </Button>
         </div>
       </div>
-      
-      {/* Dialogs */}
-      <CustomerInfoDialog />
-      <CouponSelectionDialog />
-    </ScrollArea>
+    </div>
   );
 };
 

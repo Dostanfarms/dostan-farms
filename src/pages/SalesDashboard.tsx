@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import QRCode from 'react-qr-code';
 
 const SalesDashboardContent = () => {
   const { toast } = useToast();
-  const { open: sidebarOpen, setOpenMobile } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   const [searchTerm, setSearchTerm] = useState('');
   const [products] = useState<Product[]>(getProductsFromLocalStorage());
   const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
@@ -40,14 +41,23 @@ const SalesDashboardContent = () => {
   );
 
   const addToCart = (product: Product) => {
+    console.log('Adding product to cart:', product);
     const existingItemIndex = cart.findIndex(item => item.product.id === product.id);
     
     if (existingItemIndex >= 0) {
       const updatedCart = [...cart];
       updatedCart[existingItemIndex].quantity += 1;
       setCart(updatedCart);
+      toast({
+        title: "Updated cart",
+        description: `${product.name} quantity updated in cart`,
+      });
     } else {
       setCart([...cart, { product, quantity: 1 }]);
+      toast({
+        title: "Added to cart",
+        description: `${product.name} added to cart`,
+      });
     }
   };
 
@@ -272,26 +282,26 @@ const SalesDashboardContent = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                 {filteredProducts.map((product) => (
                   <Card 
                     key={product.id} 
-                    className="overflow-hidden hover:shadow-md transition-shadow w-full max-w-[200px]"
+                    className="overflow-hidden hover:shadow-md transition-shadow w-full max-w-[200px] flex flex-col"
                   >
-                    <CardHeader className="bg-muted pb-1 px-2 py-2">
-                      <CardTitle className="text-xs font-medium truncate">{product.name}</CardTitle>
+                    <CardHeader className="bg-muted pb-1 px-3 py-2">
+                      <CardTitle className="text-sm font-medium truncate">{product.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-2 px-2 pb-2 flex flex-col justify-between h-full">
-                      <div className="space-y-1">
+                    <CardContent className="pt-2 px-3 pb-2 flex flex-col justify-between flex-1">
+                      <div className="space-y-1 mb-2">
                         <div className="text-xs text-muted-foreground">
                           {product.quantity} {product.unit}
                         </div>
-                        <div className="text-xs font-semibold">₹{product.pricePerUnit}</div>
+                        <div className="text-sm font-semibold">₹{product.pricePerUnit}</div>
                       </div>
                       <Button
                         size="sm"
                         onClick={() => addToCart(product)}
-                        className="w-full h-6 text-xs bg-green-600 hover:bg-green-700 mt-2"
+                        className="w-full h-7 text-xs bg-green-600 hover:bg-green-700 mt-auto"
                       >
                         <ShoppingCart className="h-3 w-3 mr-1" />
                         Add to Cart

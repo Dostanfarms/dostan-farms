@@ -1,149 +1,130 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Employee } from '../utils/employeeData';
-import { initialEmployees, rolePermissions } from '../utils/employeeData';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-
-type AuthContextType = {
-  currentUser: Employee | null;
-  login: (usernameOrEmail: string, password: string) => Promise<boolean>;
+interface AuthContextProps {
+  user: User | null;
+  login: (user: User) => void;
   logout: () => void;
-  checkPermission: (resource: string, action: 'view' | 'create' | 'edit' | 'delete') => boolean;
+  checkPermission: (resource: string, action: string) => boolean;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface RolePermissions {
+  [resource: string]: string[];
+}
+
+interface RolesConfig {
+  [role: string]: RolePermissions;
+}
+
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
+
+const defaultRoles = {
+  admin: {
+    dashboard: ['view'],
+    products: ['view', 'create', 'edit', 'delete'],
+    sales: ['view', 'create', 'edit', 'delete'],
+    customers: ['view', 'create', 'edit', 'delete'],
+    farmers: ['view', 'create', 'edit', 'delete'],
+    employees: ['view', 'create', 'edit', 'delete'],
+    transactions: ['view', 'create', 'edit', 'delete'],
+    tickets: ['view', 'create', 'edit', 'delete'],
+    coupons: ['view', 'create', 'edit', 'delete'],
+    roles: ['view', 'create', 'edit', 'delete']
+  },
+  sales_executive: {
+    dashboard: ['view'],
+    products: ['view'],
+    sales: ['view', 'create'],
+    customers: ['view', 'create'],
+    farmers: ['view'],
+    tickets: ['view', 'create'],
+    coupons: ['view']
+  },
+  manager: {
+    dashboard: ['view'],
+    products: ['view', 'create', 'edit'],
+    sales: ['view', 'create', 'edit'],
+    customers: ['view', 'create', 'edit'],
+    farmers: ['view', 'create', 'edit'],
+    employees: ['view'],
+    transactions: ['view'],
+    tickets: ['view', 'create', 'edit'],
+    coupons: ['view', 'create', 'edit']
+  }
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<Employee | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [roles, setRoles] = useState<RolesConfig>(defaultRoles);
 
-  // Helper function to get all employees (initial + registered)
-  const getAllEmployees = (): Employee[] => {
-    const registeredEmployeesStr = localStorage.getItem('registeredEmployees');
-    const registeredEmployees = registeredEmployeesStr ? JSON.parse(registeredEmployeesStr) : [];
-    
-    // Combine initial employees with registered employees
-    const allEmployees = [...initialEmployees, ...registeredEmployees];
-    
-    // Remove duplicates based on ID
-    return allEmployees.filter((employee, index, self) => 
-      index === self.findIndex(e => e.id === employee.id)
-    );
-  };
-
-  // Check for logged in user on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentEmployee');
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        console.log('Checking saved user:', parsedUser);
-        
-        // Get all employees (initial + registered)
-        const allEmployees = getAllEmployees();
-        
-        // Look for the user in all employees
-        const employee = allEmployees.find(e => e.id === parsedUser.id);
-        
-        if (employee) {
-          console.log('Found employee:', employee);
-          setCurrentUser(employee);
-        } else {
-          console.log('Employee not found, clearing saved user');
-          localStorage.removeItem('currentEmployee');
-        }
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('currentEmployee');
-      }
+    const storedRoles = localStorage.getItem('roles');
+    if (storedRoles) {
+      setRoles(JSON.parse(storedRoles));
     }
   }, []);
 
-  const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {
-    console.log('Attempting login for:', usernameOrEmail);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Get all employees (initial + registered)
-    const allEmployees = getAllEmployees();
-    
-    // Look for employee with matching credentials (check both email and name)
-    const employee = allEmployees.find(e => 
-      (e.email === usernameOrEmail || e.name === usernameOrEmail) && e.password === password
-    );
-    
-    console.log('Login result for', usernameOrEmail, ':', employee ? 'success' : 'failed');
-    
-    if (employee) {
-      setCurrentUser(employee);
-      localStorage.setItem('currentEmployee', JSON.stringify({
-        id: employee.id,
-        name: employee.name,
-        role: employee.role,
-        email: employee.email
-      }));
-      return true;
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
     }
-    
-    return false;
+  }, [user]);
+
+  const login = (user: User) => {
+    setUser(user);
   };
 
   const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('currentEmployee');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out"
-    });
-    navigate('/employee-login');
+    setUser(null);
   };
 
-  const checkPermission = (resource: string, action: 'view' | 'create' | 'edit' | 'delete'): boolean => {
-    if (!currentUser) {
-      console.log('No current user, permission denied');
+  const checkPermission = (resource: string, action: string): boolean => {
+    if (!user) return false;
+    const userRole = user.role;
+    const rolePermissions = roles[userRole];
+
+    if (!rolePermissions || !rolePermissions[resource]) {
       return false;
     }
-    
-    console.log(`Checking permission for user ${currentUser.name} (${currentUser.role}) - ${resource}:${action}`);
-    
-    // Check if there are custom permissions stored in localStorage
-    const storedPermissions = localStorage.getItem('rolePermissions');
-    const permissionsToUse = storedPermissions ? JSON.parse(storedPermissions) : rolePermissions;
-    
-    const rolePermission = permissionsToUse.find((rp: any) => rp.role === currentUser.role);
-    if (!rolePermission) {
-      console.log(`No permissions found for role: ${currentUser.role}`);
-      return false;
-    }
-    
-    const resourcePermission = rolePermission.permissions.find((p: any) => p.resource === resource);
-    if (!resourcePermission) {
-      console.log(`No permissions found for resource: ${resource}`);
-      return false;
-    }
-    
-    const hasAccess = resourcePermission.actions.includes(action);
-    console.log(`Permission result: ${hasAccess}`);
-    return hasAccess;
+
+    return rolePermissions[resource].includes(action);
   };
 
-  const value = {
-    currentUser,
+  const value: AuthContextProps = {
+    user,
     login,
     logout,
-    checkPermission
+    checkPermission,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const useAuth = () => {
+const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
+
+export { AuthProvider, useAuth };
