@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +31,6 @@ const Products = () => {
     setProducts(storedProducts);
   }, []);
 
-  // Filter products based on search
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (product.barcode && product.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -40,12 +40,10 @@ const Products = () => {
     let updatedProducts;
     
     if (selectedProduct) {
-      // Update existing product
       updatedProducts = products.map(product => 
         product.id === newProduct.id ? newProduct : product
       );
     } else {
-      // Add new product
       updatedProducts = [...products, newProduct];
     }
     
@@ -106,24 +104,23 @@ const Products = () => {
               }
               .barcode-container { 
                 border: 2px solid #000; 
-                padding: 20px; 
+                padding: 30px; 
                 display: inline-block; 
                 background: white;
-                max-width: 400px;
+                max-width: 500px;
               }
-              .product-name { 
-                font-size: 24px; 
+              .product-info { 
+                font-size: 32px; 
                 font-weight: bold; 
-                margin-bottom: 15px; 
+                margin-bottom: 20px; 
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 20px;
               }
               .barcode-image { 
-                margin: 15px 0;
+                margin: 20px 0;
                 max-width: 100%;
-              }
-              .quantity { 
-                font-size: 20px; 
-                font-weight: bold;
-                margin-top: 15px; 
               }
               @media print {
                 body { margin: 0; }
@@ -134,16 +131,19 @@ const Products = () => {
           </head>
           <body>
             <div class="barcode-container">
-              <div class="product-name">${product.name}</div>
+              <div class="product-info">
+                <span>${product.name}</span>
+                <span>${product.quantity} ${product.unit}</span>
+              </div>
               <svg id="barcode" class="barcode-image"></svg>
-              <div class="quantity">${product.quantity} ${product.unit}</div>
             </div>
             <script>
               JsBarcode("#barcode", "${product.barcode}", {
                 format: "CODE128",
-                width: 2,
-                height: 80,
-                displayValue: true
+                width: 3,
+                height: 100,
+                displayValue: true,
+                fontSize: 16
               });
               setTimeout(() => {
                 window.print();
@@ -267,7 +267,7 @@ const Products = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden w-[180px] h-[250px]">
+                <Card key={product.id} className="overflow-hidden w-[200px] h-[280px]">
                   <CardHeader className="bg-muted pb-2">
                     <CardTitle className="text-sm truncate">
                       {product.name}
@@ -277,16 +277,16 @@ const Products = () => {
                     <div className="space-y-3">
                       {/* Smaller Barcode Display */}
                       {product.barcode && (
-                        <div className="text-center p-1 bg-white rounded-lg border">
-                          <div className="mb-1">
+                        <div className="text-center p-2 bg-white rounded-lg border">
+                          <div className="mb-2">
                             <Barcode128 
                               value={product.barcode}
                               format="CODE128"
-                              width={0.8}
-                              height={20}
+                              width={0.6}
+                              height={15}
                               displayValue={true}
-                              fontSize={6}
-                              margin={1}
+                              fontSize={4}
+                              margin={0}
                             />
                           </div>
                           <Button 

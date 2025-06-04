@@ -14,7 +14,7 @@ import QRCode from 'react-qr-code';
 
 const SalesDashboardContent = () => {
   const { toast } = useToast();
-  const { open: sidebarOpen } = useSidebar();
+  const { open: sidebarOpen, setOpenMobile } = useSidebar();
   const [searchTerm, setSearchTerm] = useState('');
   const [products] = useState<Product[]>(getProductsFromLocalStorage());
   const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
@@ -27,6 +27,11 @@ const SalesDashboardContent = () => {
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
   const [lastSaleData, setLastSaleData] = useState<any>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Close sidebar automatically when component mounts
+  React.useEffect(() => {
+    setOpenMobile(false);
+  }, [setOpenMobile]);
 
   // Filter products based on search
   const filteredProducts = products.filter(product => 
@@ -256,8 +261,8 @@ const SalesDashboardContent = () => {
         </div>
 
         <div className="flex gap-6 h-full">
-          {/* Products Section - Fixed grid layout */}
-          <div className={`transition-all duration-300 ${sidebarOpen ? 'w-2/3' : 'w-3/4'}`}>
+          {/* Products Section */}
+          <div className="flex-1 min-w-0">
             {filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-lg">
                 <Package className="h-12 w-12 text-muted-foreground mb-4" />
@@ -267,12 +272,11 @@ const SalesDashboardContent = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 auto-rows-max">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                 {filteredProducts.map((product) => (
                   <Card 
                     key={product.id} 
-                    className="overflow-hidden hover:shadow-md transition-shadow flex-shrink-0"
-                    style={{ width: '110px', height: '120px' }}
+                    className="overflow-hidden hover:shadow-md transition-shadow w-full max-w-[200px]"
                   >
                     <CardHeader className="bg-muted pb-1 px-2 py-2">
                       <CardTitle className="text-xs font-medium truncate">{product.name}</CardTitle>
@@ -289,7 +293,8 @@ const SalesDashboardContent = () => {
                         onClick={() => addToCart(product)}
                         className="w-full h-6 text-xs bg-green-600 hover:bg-green-700 mt-2"
                       >
-                        Add Cart
+                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        Add to Cart
                       </Button>
                     </CardContent>
                   </Card>
@@ -298,8 +303,8 @@ const SalesDashboardContent = () => {
             )}
           </div>
 
-          {/* Cart Section - 1/3 of the page */}
-          <div className={`transition-all duration-300 ${sidebarOpen ? 'w-1/3' : 'w-1/4'} min-w-[280px]`}>
+          {/* Cart Section */}
+          <div className="w-80 min-w-[320px]">
             <Card className="h-fit sticky top-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
