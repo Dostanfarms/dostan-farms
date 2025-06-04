@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
@@ -15,10 +14,8 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { setOpenMobile } = useSidebar();
 
   const handleSalesDashboardClick = () => {
-    setOpenMobile(false);
     navigate('/sales-dashboard');
   };
 
