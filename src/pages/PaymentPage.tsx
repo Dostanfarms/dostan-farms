@@ -18,12 +18,14 @@ import {
   Trash2,
   Plus,
   Minus,
-  Printer
+  Printer,
+  Tag
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CartItem } from '@/utils/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ const PaymentPage = () => {
   // Customer Info State
   const [customerName, setCustomerName] = useState('');
   const [customerMobile, setCustomerMobile] = useState('');
+  const [customerInfoDialogOpen, setCustomerInfoDialogOpen] = useState(false);
   
   // Load cart items from localStorage
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -40,9 +43,20 @@ const PaymentPage = () => {
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  // Local state
+  // Coupon states
+  const [activeCoupons, setActiveCoupons] = useState<any[]>([]);
+  const [couponDialogOpen, setCouponDialogOpen] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState<any | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
+
+  // Load active coupons on component mount
+  useEffect(() => {
+    const coupons = getActiveCoupons();
+    setActiveCoupons(coupons);
+  }, []);
+
+  // Payment states
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -96,6 +110,56 @@ const PaymentPage = () => {
   const deliveryFee = 30; // Fixed delivery fee
   const total = subtotal + taxAmount + deliveryFee - discount;
 
+  // Apply selected coupon 
+  const applyCoupon = (coupon: any) => {
+    if (!coupon) return;
+    
+    let discountAmount = 0;
+    
+    if (coupon.discountType === 'flat') {
+      discountAmount = coupon.discountValue;
+    } else if (coupon.discountType === 'percentage') {
+      discountAmount = (subtotal * coupon.discountValue) / 100;
+      if (coupon.maxDiscountLimit) {
+        discountAmount = Math.min(discountAmount, coupon.maxDiscountLimit);
+      }
+    }
+    
+    setSelectedCoupon(coupon);
+    setCouponCode(coupon.code);
+    setDiscount(discountAmount);
+    setCouponDialogOpen(false);
+    
+    toast({
+      title: "Coupon applied",
+      description: `₹${discountAmount.toFixed(2)} discount has been applied to your order`
+    });
+  };
+
+  // Apply coupon by code
+  const applyCouponByCode = () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Missing coupon code",
+        description: "Please enter a coupon code",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const coupon = activeCoupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase());
+    
+    if (coupon) {
+      applyCoupon(coupon);
+    } else {
+      toast({
+        title: "Invalid coupon",
+        description: "The coupon code you entered is invalid or expired",
+        variant: "destructive"
+      });
+    }
+  };
+  
   // Print receipt function
   const printReceipt = () => {
     if (!orderId) return;
@@ -231,47 +295,6 @@ const PaymentPage = () => {
     }
   };
   
-  // Handle coupon application
-  const applyCoupon = () => {
-    if (!couponCode.trim()) {
-      toast({
-        title: "Missing coupon code",
-        description: "Please enter a coupon code",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Get active coupons from localStorage
-    const activeCoupons = getActiveCoupons();
-    const coupon = activeCoupons.find((c: any) => c.code.toUpperCase() === couponCode.toUpperCase());
-    
-    if (coupon) {
-      let discountAmount = 0;
-      
-      if (coupon.discountType === 'flat') {
-        discountAmount = coupon.discountValue;
-      } else if (coupon.discountType === 'percentage') {
-        discountAmount = (subtotal * coupon.discountValue) / 100;
-        if (coupon.maxDiscountLimit) {
-          discountAmount = Math.min(discountAmount, coupon.maxDiscountLimit);
-        }
-      }
-      
-      setDiscount(discountAmount);
-      toast({
-        title: "Coupon applied",
-        description: `₹${discountAmount.toFixed(2)} discount has been applied to your order`
-      });
-    } else {
-      toast({
-        title: "Invalid coupon",
-        description: "The coupon code you entered is invalid or expired",
-        variant: "destructive"
-      });
-    }
-  };
-  
   // Handle checkout
   const handleCheckout = () => {
     if (cartItems.length === 0) {
@@ -284,11 +307,7 @@ const PaymentPage = () => {
     }
     
     if (!customerName.trim() || !customerMobile.trim()) {
-      toast({
-        title: "Missing customer information",
-        description: "Please enter customer name and mobile number",
-        variant: "destructive"
-      });
+      setCustomerInfoDialogOpen(true);
       return;
     }
     
@@ -312,7 +331,9 @@ const PaymentPage = () => {
         status: 'placed',
         date: new Date().toISOString(),
         estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        paymentMethod
+        paymentMethod,
+        discount: discount,
+        couponCode: selectedCoupon?.code || ''
       };
       
       // Store order
@@ -334,6 +355,95 @@ const PaymentPage = () => {
       navigate(`/order-receipt/${order.id}`);
     }, 2000);
   };
+
+  // Customer info dialog component
+  const CustomerInfoDialog = () => (
+    <Dialog open={customerInfoDialogOpen} onOpenChange={setCustomerInfoDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Customer Information</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label htmlFor="dialog-customer-name">Customer Name</Label>
+            <Input
+              id="dialog-customer-name"
+              placeholder="Enter customer name"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dialog-customer-mobile">Mobile Number</Label>
+            <Input
+              id="dialog-customer-mobile"
+              placeholder="Enter mobile number"
+              value={customerMobile}
+              onChange={(e) => setCustomerMobile(e.target.value)}
+            />
+          </div>
+          <Button 
+            className="w-full bg-agri-primary hover:bg-agri-secondary"
+            onClick={() => {
+              if (customerName.trim() && customerMobile.trim()) {
+                setCustomerInfoDialogOpen(false);
+                handleCheckout();
+              } else {
+                toast({
+                  title: "Missing information",
+                  description: "Please provide both customer name and mobile number",
+                  variant: "destructive"
+                });
+              }
+            }}
+          >
+            Continue to Checkout
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // Coupon selection dialog component
+  const CouponSelectionDialog = () => (
+    <Dialog open={couponDialogOpen} onOpenChange={setCouponDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Available Coupons</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="max-h-[300px]">
+          {activeCoupons.length > 0 ? (
+            <div className="space-y-3">
+              {activeCoupons.map((coupon) => (
+                <Card key={coupon.id} className="cursor-pointer hover:bg-muted/50" onClick={() => applyCoupon(coupon)}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-bold">{coupon.code}</h3>
+                        <p className="text-sm text-muted-foreground">{coupon.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-green-600">
+                          {coupon.discountType === 'percentage' 
+                            ? `${coupon.discountValue}% OFF` 
+                            : `₹${coupon.discountValue} OFF`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Expires: {new Date(coupon.expiryDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center py-4 text-muted-foreground">No active coupons available</p>
+          )}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
   
   return (
     <ScrollArea className="min-h-screen h-full">
@@ -359,31 +469,83 @@ const PaymentPage = () => {
           {/* Customer Information Card */}
           <Card className="mb-4">
             <CardHeader>
-              <CardTitle>Customer Information</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Customer Information
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCustomerInfoDialogOpen(true)}
+                >
+                  {customerName && customerMobile ? 'Edit' : 'Add'}
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              {customerName && customerMobile ? (
                 <div className="space-y-2">
-                  <Label htmlFor="customer-name">Customer Name</Label>
-                  <Input
-                    id="customer-name"
-                    placeholder="Enter customer name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    required
-                  />
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-muted-foreground">Name:</span>
+                    <span>{customerName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Mobile:</span>
+                    <span>{customerMobile}</span>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="customer-mobile">Mobile Number</Label>
-                  <Input
-                    id="customer-mobile"
-                    placeholder="Enter mobile number"
-                    value={customerMobile}
-                    onChange={(e) => setCustomerMobile(e.target.value)}
-                    required
-                  />
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p>No customer information added</p>
+                  <p className="text-xs">Click 'Add' to enter customer details</p>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Coupon Card */}
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-5 w-5" />
+                  <span>Apply Coupon</span>
+                </div>
+                {activeCoupons.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCouponDialogOpen(true)}
+                  >
+                    Browse Coupons
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === 'Enter' && applyCouponByCode()}
+                />
+                <Button
+                  variant="outline"
+                  onClick={applyCouponByCode}
+                >
+                  Apply
+                </Button>
               </div>
+              {selectedCoupon && (
+                <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{selectedCoupon.code} applied</p>
+                      <p className="text-xs text-muted-foreground">{selectedCoupon.description}</p>
+                    </div>
+                    <p className="text-green-600 font-semibold">-₹{discount.toFixed(2)}</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -448,32 +610,6 @@ const PaymentPage = () => {
           
           <Card className="mb-4">
             <CardHeader>
-              <CardTitle>Apply Coupon</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter coupon code"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                />
-                <Button
-                  variant="outline"
-                  onClick={applyCoupon}
-                >
-                  Apply
-                </Button>
-              </div>
-              {discount > 0 && (
-                <p className="mt-2 text-sm text-green-600">
-                  Coupon applied: ₹{discount.toFixed(2)} discount
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card className="mb-4">
-            <CardHeader>
               <CardTitle>Payment Method</CardTitle>
             </CardHeader>
             <CardContent>
@@ -527,7 +663,7 @@ const PaymentPage = () => {
               <Button
                 className="w-full bg-agri-primary hover:bg-agri-secondary"
                 onClick={handleCheckout}
-                disabled={isProcessing || cartItems.length === 0 || !customerName.trim() || !customerMobile.trim()}
+                disabled={isProcessing || cartItems.length === 0}
               >
                 {isProcessing ? "Processing..." : "Place Order"}
               </Button>
@@ -548,6 +684,10 @@ const PaymentPage = () => {
           <div className="hidden" ref={printReceiptRef}></div>
         </div>
       </div>
+      
+      {/* Dialogs */}
+      <CustomerInfoDialog />
+      <CouponSelectionDialog />
     </ScrollArea>
   );
 };

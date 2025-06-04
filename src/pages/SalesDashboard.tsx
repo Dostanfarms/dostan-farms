@@ -256,7 +256,7 @@ const SalesDashboardContent = () => {
         </div>
 
         <div className="flex gap-6 h-full">
-          {/* Products Section - 2/3 of the page */}
+          {/* Products Section - Fixed grid layout */}
           <div className={`transition-all duration-300 ${sidebarOpen ? 'w-2/3' : 'w-3/4'}`}>
             {filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-lg">
@@ -267,29 +267,30 @@ const SalesDashboardContent = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 auto-rows-max">
                 {filteredProducts.map((product) => (
                   <Card 
                     key={product.id} 
-                    className="overflow-hidden hover:shadow-md transition-shadow w-[110px] h-[140px]"
+                    className="overflow-hidden hover:shadow-md transition-shadow flex-shrink-0"
+                    style={{ width: '110px', height: '120px' }}
                   >
                     <CardHeader className="bg-muted pb-1 px-2 py-2">
                       <CardTitle className="text-xs font-medium truncate">{product.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-2 px-2 pb-2">
+                    <CardContent className="pt-2 px-2 pb-2 flex flex-col justify-between h-full">
                       <div className="space-y-1">
                         <div className="text-xs text-muted-foreground">
                           {product.quantity} {product.unit}
                         </div>
                         <div className="text-xs font-semibold">₹{product.pricePerUnit}</div>
-                        <Button
-                          size="sm"
-                          onClick={() => addToCart(product)}
-                          className="w-full h-6 text-xs bg-green-600 hover:bg-green-700"
-                        >
-                          Add Cart
-                        </Button>
                       </div>
+                      <Button
+                        size="sm"
+                        onClick={() => addToCart(product)}
+                        className="w-full h-6 text-xs bg-green-600 hover:bg-green-700 mt-2"
+                      >
+                        Add Cart
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}

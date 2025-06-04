@@ -28,8 +28,10 @@ const TopLevelMenu = () => {
     }
   ];
 
-  const handleSalesDashboardClick = () => {
-    setOpenMobile(false);
+  const handleLinkClick = (path: string) => {
+    if (path === '/sales' || path === '/dashboard') {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -44,7 +46,7 @@ const TopLevelMenu = () => {
                   className={`flex items-center gap-3 py-2 px-3 rounded-md ${
                     location.pathname === item.path ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-muted'
                   }`}
-                  onClick={item.path === '/sales-dashboard' ? handleSalesDashboardClick : undefined}
+                  onClick={() => handleLinkClick(item.path)}
                 >
                   {item.icon}
                   <span>{item.title}</span>

@@ -112,7 +112,7 @@ const Products = () => {
                 max-width: 400px;
               }
               .product-name { 
-                font-size: 18px; 
+                font-size: 24px; 
                 font-weight: bold; 
                 margin-bottom: 15px; 
               }
@@ -120,8 +120,9 @@ const Products = () => {
                 margin: 15px 0;
                 max-width: 100%;
               }
-              .unit { 
-                font-size: 16px; 
+              .quantity { 
+                font-size: 20px; 
+                font-weight: bold;
                 margin-top: 15px; 
               }
               @media print {
@@ -135,7 +136,7 @@ const Products = () => {
             <div class="barcode-container">
               <div class="product-name">${product.name}</div>
               <svg id="barcode" class="barcode-image"></svg>
-              <div class="unit">${product.unit}</div>
+              <div class="quantity">${product.quantity} ${product.unit}</div>
             </div>
             <script>
               JsBarcode("#barcode", "${product.barcode}", {
@@ -266,7 +267,7 @@ const Products = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden w-[200px] h-[280px]">
+                <Card key={product.id} className="overflow-hidden w-[180px] h-[250px]">
                   <CardHeader className="bg-muted pb-2">
                     <CardTitle className="text-sm truncate">
                       {product.name}
@@ -274,27 +275,27 @@ const Products = () => {
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="space-y-3">
-                      {/* Barcode Display */}
+                      {/* Smaller Barcode Display */}
                       {product.barcode && (
-                        <div className="text-center p-2 bg-white rounded-lg border">
-                          <div className="mb-2">
+                        <div className="text-center p-1 bg-white rounded-lg border">
+                          <div className="mb-1">
                             <Barcode128 
                               value={product.barcode}
                               format="CODE128"
-                              width={1}
-                              height={30}
+                              width={0.8}
+                              height={20}
                               displayValue={true}
-                              fontSize={8}
-                              margin={2}
+                              fontSize={6}
+                              margin={1}
                             />
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => printBarcode(product)}
-                            className="w-full mt-1"
+                            className="w-full mt-1 text-xs h-6"
                           >
-                            <Printer className="h-3 w-3 mr-1" /> Print
+                            <Printer className="h-2 w-2 mr-1" /> Print
                           </Button>
                         </div>
                       )}

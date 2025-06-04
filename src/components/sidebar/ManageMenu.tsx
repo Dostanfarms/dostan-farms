@@ -6,7 +6,8 @@ import {
   SidebarGroupContent, 
   SidebarMenuItem, 
   SidebarMenu, 
-  SidebarMenuButton 
+  SidebarMenuButton,
+  useSidebar
 } from '@/components/ui/sidebar';
 import { 
   ChevronDown, 
@@ -28,6 +29,7 @@ import { getAccessibleResources } from '@/utils/employeeData';
 const ManageMenu = () => {
   const location = useLocation();
   const { currentUser } = useAuth();
+  const { setOpenMobile } = useSidebar();
   const [manageOpen, setManageOpen] = useState(false);
 
   // Open the manage menu if current location is under any manage item
@@ -90,6 +92,12 @@ const ManageMenu = () => {
     ? manageItems.filter(item => accessibleResources.includes(item.resource))
     : manageItems;
 
+  const handleLinkClick = (path: string) => {
+    if (path === '/sales') {
+      setOpenMobile(false);
+    }
+  };
+
   if (filteredManageItems.length === 0) {
     return null;
   }
@@ -115,6 +123,7 @@ const ManageMenu = () => {
                 className={`flex items-center gap-3 py-2 px-3 rounded-md ${
                   location.pathname === item.path ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-muted'
                 }`}
+                onClick={() => handleLinkClick(item.path)}
               >
                 {item.icon}
                 <span className="text-sm">{item.title}</span>
