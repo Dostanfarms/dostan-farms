@@ -301,6 +301,10 @@ const Products = () => {
                       
                       <div className="space-y-2">
                         <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Quantity:</span>
+                          <span className="font-semibold">{product.quantity} {product.unit}</span>
+                        </div>
+                        <div className="flex justify-between">
                           <span className="text-sm text-muted-foreground">Unit:</span>
                           <span>{product.unit}</span>
                         </div>

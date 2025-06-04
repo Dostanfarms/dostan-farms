@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -246,22 +245,22 @@ const SalesDashboard = () => {
       <div className="min-h-screen flex w-full">
         <Sidebar />
         <main className="flex-1 p-6 overflow-y-auto">
-          <div className="flex flex-col lg:flex-row gap-6 h-full">
-            {/* Products Section */}
-            <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                <h1 className="text-2xl font-bold">Sales Dashboard</h1>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search products..."
-                    className="pl-8 w-full md:w-[250px]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold">Sales Dashboard</h1>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                className="pl-8 w-[250px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
 
+          <div className="flex gap-6 h-full">
+            {/* Products Section - 2/3 of the page */}
+            <div className="flex-1 w-2/3">
               {filteredProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-lg">
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />
@@ -271,34 +270,27 @@ const SalesDashboard = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-3">
                   {filteredProducts.map((product) => (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                      <CardHeader className="bg-muted pb-2">
-                        <CardTitle className="text-lg">{product.name}</CardTitle>
+                    <Card 
+                      key={product.id} 
+                      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer w-[120px] h-[160px]"
+                      onClick={() => addToCart(product)}
+                    >
+                      <CardHeader className="bg-muted pb-1 px-2 py-2">
+                        <CardTitle className="text-xs font-medium truncate">{product.name}</CardTitle>
                       </CardHeader>
-                      <CardContent className="pt-4">
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Unit:</span>
-                            <span>{product.unit}</span>
+                      <CardContent className="pt-2 px-2 pb-2">
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">
+                            {product.quantity} {product.unit}
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Price:</span>
-                            <span className="font-semibold">₹{product.pricePerUnit}</span>
-                          </div>
+                          <div className="text-sm font-semibold">₹{product.pricePerUnit}</div>
                           {product.barcode && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Barcode:</span>
-                              <span className="font-mono text-xs">{product.barcode}</span>
+                            <div className="text-xs font-mono text-muted-foreground truncate">
+                              {product.barcode}
                             </div>
                           )}
-                          <Button 
-                            className="w-full bg-agri-primary hover:bg-agri-secondary"
-                            onClick={() => addToCart(product)}
-                          >
-                            <Plus className="h-4 w-4 mr-2" /> Add to Cart
-                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -307,9 +299,9 @@ const SalesDashboard = () => {
               )}
             </div>
 
-            {/* Cart Section */}
-            <div className="w-full lg:w-96">
-              <Card className="h-fit">
+            {/* Cart Section - 1/3 of the page */}
+            <div className="w-1/3 min-w-[300px]">
+              <Card className="h-fit sticky top-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5" />

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,7 @@ interface ProductFormProps {
 
 const ProductForm = ({ farmerId, onSubmit, onCancel, editProduct }: ProductFormProps) => {
   const [name, setName] = useState(editProduct?.name || '');
+  const [quantity, setQuantity] = useState(editProduct?.quantity.toString() || '1');
   const [unit, setUnit] = useState(editProduct?.unit || 'kg');
   const [pricePerUnit, setPricePerUnit] = useState(editProduct?.pricePerUnit.toString() || '');
 
@@ -27,14 +29,14 @@ const ProductForm = ({ farmerId, onSubmit, onCancel, editProduct }: ProductFormP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !pricePerUnit) {
+    if (!name || !quantity || !pricePerUnit) {
       return;
     }
     
     const product: Product = {
       id: editProduct?.id || `prod_${Date.now()}`,
       name,
-      quantity: 1, // Default quantity to 1 since it's removed from form
+      quantity: parseFloat(quantity),
       unit,
       pricePerUnit: parseFloat(pricePerUnit),
       category: 'General', // Default category since it's removed from form
@@ -61,7 +63,21 @@ const ProductForm = ({ farmerId, onSubmit, onCancel, editProduct }: ProductFormP
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Quantity</Label>
+              <Input
+                id="quantity"
+                type="number"
+                min="0"
+                step="0.01"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="e.g. 1, 0.5"
+                required
+              />
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
               <Select value={unit} onValueChange={setUnit}>
