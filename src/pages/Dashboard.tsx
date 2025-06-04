@@ -1,76 +1,51 @@
 
 import React from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
-import { useAuth } from '@/context/AuthContext';
-import { Users, Package, ShoppingCart, Receipt, TrendingUp, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  TrendingUp, 
+  Users, 
+  Package, 
+  IndianRupee,
+  ShoppingCart
+} from 'lucide-react';
 
 const Dashboard = () => {
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { setOpenMobile } = useSidebar();
 
-  const dashboardStats = [
+  const handleSalesDashboardClick = () => {
+    setOpenMobile(false);
+    navigate('/sales-dashboard');
+  };
+
+  const stats = [
+    {
+      title: "Total Sales",
+      value: "₹25,430",
+      change: "+12.5%",
+      icon: <TrendingUp className="h-6 w-6" />
+    },
     {
       title: "Total Farmers",
       value: "156",
-      icon: Users,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
+      change: "+3.2%",
+      icon: <Users className="h-6 w-6" />
     },
     {
       title: "Products",
       value: "89",
-      icon: Package,
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    {
-      title: "Sales Today",
-      value: "23",
-      icon: ShoppingCart,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50"
+      change: "+8.1%",
+      icon: <Package className="h-6 w-6" />
     },
     {
       title: "Revenue",
-      value: "₹12,450",
-      icon: DollarSign,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50"
-    }
-  ];
-
-  const quickActions = [
-    {
-      title: "Manage Farmers",
-      description: "View and manage farmer profiles",
-      icon: Users,
-      action: () => navigate('/farmers'),
-      color: "bg-blue-500 hover:bg-blue-600"
-    },
-    {
-      title: "Product Management",
-      description: "Add and manage products",
-      icon: Package,
-      action: () => navigate('/products'),
-      color: "bg-green-500 hover:bg-green-600"
-    },
-    {
-      title: "View Transactions",
-      description: "Track all transactions",
-      icon: Receipt,
-      action: () => navigate('/transactions'),
-      color: "bg-purple-500 hover:bg-purple-600"
-    },
-    {
-      title: "Sales Analytics",
-      description: "View sales reports and analytics",
-      icon: TrendingUp,
-      action: () => navigate('/sales'),
-      color: "bg-orange-500 hover:bg-orange-600"
+      value: "₹1,23,450",
+      change: "+15.3%",
+      icon: <IndianRupee className="h-6 w-6" />
     }
   ];
 
@@ -79,106 +54,115 @@ const Dashboard = () => {
       <div className="min-h-screen flex w-full">
         <Sidebar />
         <main className="flex-1 p-6 overflow-y-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, {currentUser?.name}</p>
+              <p className="text-muted-foreground">Welcome to DostanFarms Dashboard</p>
             </div>
             <Button 
-              onClick={() => navigate('/sales-dashboard')}
-              className="bg-agri-primary hover:bg-agri-secondary"
+              onClick={handleSalesDashboardClick}
+              className="bg-green-600 hover:bg-green-700"
             >
-              <ShoppingCart className="mr-2 h-4 w-4" />
+              <ShoppingCart className="h-4 w-4 mr-2" />
               Sales Dashboard
             </Button>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {dashboardStats.map((stat) => (
-              <Card key={stat.title}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                    </div>
-                    <div className={`${stat.bgColor} p-3 rounded-full`}>
-                      <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                    </div>
+            {stats.map((stat, index) => (
+              <Card key={index}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {stat.title}
+                  </CardTitle>
+                  <div className="text-muted-foreground">
+                    {stat.icon}
                   </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-green-600">
+                    {stat.change} from last month
+                  </p>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {quickActions.map((action) => (
-                  <Button
-                    key={action.title}
-                    variant="outline"
-                    className={`${action.color} text-white border-none h-auto p-6 flex flex-col items-center gap-3`}
-                    onClick={action.action}
-                  >
-                    <action.icon className="h-8 w-8" />
-                    <div className="text-center">
-                      <div className="font-semibold">{action.title}</div>
-                      <div className="text-xs opacity-90">{action.description}</div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activities</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">New farmer registered</p>
+                      <p className="text-xs text-muted-foreground">2 minutes ago</p>
                     </div>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Product added to inventory</p>
+                      <p className="text-xs text-muted-foreground">15 minutes ago</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Sale completed</p>
+                      <p className="text-xs text-muted-foreground">1 hour ago</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Recent Activity */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
-                  <div className="bg-green-100 p-2 rounded-full">
-                    <Package className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">New product added</p>
-                    <p className="text-sm text-muted-foreground">Tomatoes added to inventory</p>
-                  </div>
-                  <span className="text-sm text-muted-foreground">2 hours ago</span>
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col"
+                    onClick={() => navigate('/products')}
+                  >
+                    <Package className="h-6 w-6 mb-2" />
+                    <span>Manage Products</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col"
+                    onClick={() => navigate('/farmers')}
+                  >
+                    <Users className="h-6 w-6 mb-2" />
+                    <span>Manage Farmers</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col"
+                    onClick={handleSalesDashboardClick}
+                  >
+                    <ShoppingCart className="h-6 w-6 mb-2" />
+                    <span>Start Sale</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col"
+                    onClick={() => navigate('/transactions')}
+                  >
+                    <IndianRupee className="h-6 w-6 mb-2" />
+                    <span>View Transactions</span>
+                  </Button>
                 </div>
-                
-                <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
-                  <div className="bg-blue-100 p-2 rounded-full">
-                    <Users className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">New farmer registered</p>
-                    <p className="text-sm text-muted-foreground">Rahul Kumar joined the platform</p>
-                  </div>
-                  <span className="text-sm text-muted-foreground">5 hours ago</span>
-                </div>
-                
-                <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
-                  <div className="bg-purple-100 p-2 rounded-full">
-                    <ShoppingCart className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">Sale completed</p>
-                    <p className="text-sm text-muted-foreground">₹450 sale processed successfully</p>
-                  </div>
-                  <span className="text-sm text-muted-foreground">1 day ago</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </main>
       </div>
     </SidebarProvider>

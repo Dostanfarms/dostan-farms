@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import QRCode from 'react-qr-code';
 
 const SalesDashboard = () => {
   const { toast } = useToast();
+  const { open: sidebarOpen } = useSidebar();
   const [searchTerm, setSearchTerm] = useState('');
   const [products] = useState<Product[]>(getProductsFromLocalStorage());
   const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
@@ -37,12 +38,10 @@ const SalesDashboard = () => {
     const existingItemIndex = cart.findIndex(item => item.product.id === product.id);
     
     if (existingItemIndex >= 0) {
-      // Product already in cart, increase quantity
       const updatedCart = [...cart];
       updatedCart[existingItemIndex].quantity += 1;
       setCart(updatedCart);
     } else {
-      // Add new product to cart
       setCart([...cart, { product, quantity: 1 }]);
     }
   };
@@ -95,7 +94,6 @@ const SalesDashboard = () => {
       }
     }
 
-    // Store sale data for receipt
     const saleData = {
       items: cart,
       total,
@@ -260,7 +258,7 @@ const SalesDashboard = () => {
 
           <div className="flex gap-6 h-full">
             {/* Products Section - 2/3 of the page */}
-            <div className="flex-1 w-2/3">
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'w-2/3' : 'w-3/4'}`}>
               {filteredProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-lg">
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />
@@ -270,12 +268,11 @@ const SalesDashboard = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-5 gap-3">
                   {filteredProducts.map((product) => (
                     <Card 
                       key={product.id} 
-                      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer w-[120px] h-[160px]"
-                      onClick={() => addToCart(product)}
+                      className="overflow-hidden hover:shadow-md transition-shadow w-[110px] h-[140px]"
                     >
                       <CardHeader className="bg-muted pb-1 px-2 py-2">
                         <CardTitle className="text-xs font-medium truncate">{product.name}</CardTitle>
@@ -285,12 +282,14 @@ const SalesDashboard = () => {
                           <div className="text-xs text-muted-foreground">
                             {product.quantity} {product.unit}
                           </div>
-                          <div className="text-sm font-semibold">₹{product.pricePerUnit}</div>
-                          {product.barcode && (
-                            <div className="text-xs font-mono text-muted-foreground truncate">
-                              {product.barcode}
-                            </div>
-                          )}
+                          <div className="text-xs font-semibold">₹{product.pricePerUnit}</div>
+                          <Button
+                            size="sm"
+                            onClick={() => addToCart(product)}
+                            className="w-full h-6 text-xs bg-green-600 hover:bg-green-700"
+                          >
+                            Add Cart
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -300,7 +299,7 @@ const SalesDashboard = () => {
             </div>
 
             {/* Cart Section - 1/3 of the page */}
-            <div className="w-1/3 min-w-[300px]">
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'w-1/3' : 'w-1/4'} min-w-[280px]`}>
               <Card className="h-fit sticky top-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

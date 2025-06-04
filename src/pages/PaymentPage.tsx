@@ -30,9 +30,9 @@ const PaymentPage = () => {
   const { toast } = useToast();
   const printReceiptRef = useRef<HTMLDivElement>(null);
   
-  // Get customer data from localStorage
-  const customerString = localStorage.getItem('currentCustomer');
-  const customer = customerString ? JSON.parse(customerString) : null;
+  // Customer Info State
+  const [customerName, setCustomerName] = useState('');
+  const [customerMobile, setCustomerMobile] = useState('');
   
   // Load cart items from localStorage
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -47,16 +47,15 @@ const PaymentPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!customer) {
-      navigate('/customer-login');
-    }
-  }, [customer, navigate]);
-  
-  if (!customer) {
-    return null; // Redirect handled in useEffect
-  }
+  // Load active coupons from localStorage
+  const getActiveCoupons = () => {
+    const coupons = JSON.parse(localStorage.getItem('coupons') || '[]');
+    return coupons.filter((coupon: any) => {
+      const now = new Date();
+      const expiryDate = new Date(coupon.expiryDate);
+      return expiryDate > now; // Only return active (non-expired) coupons
+    });
+  };
   
   // Functions to update cart
   const increaseQuantity = (productId: string) => {
@@ -106,7 +105,6 @@ const PaymentPage = () => {
     if (printWindow) {
       const currentDate = new Date().toLocaleString();
       
-      // Create receipt HTML content
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
@@ -165,7 +163,7 @@ const PaymentPage = () => {
         <body>
           <div class="receipt">
             <div class="header">
-              <h1>AgriPay</h1>
+              <h1>DostanFarms</h1>
               <p>Order Receipt</p>
               <p>Order #${orderId}</p>
               <p>${currentDate}</p>
@@ -173,9 +171,8 @@ const PaymentPage = () => {
             
             <div class="customer-info">
               <h3>Customer Information</h3>
-              <p><strong>Name:</strong> ${customer.name}</p>
-              <p><strong>Address:</strong> ${customer.address}</p>
-              <p><strong>Phone:</strong> ${customer.mobile}</p>
+              <p><strong>Name:</strong> ${customerName}</p>
+              <p><strong>Phone:</strong> ${customerMobile}</p>
               <p><strong>Payment Method:</strong> ${paymentMethod === 'cash' ? 'Cash on Delivery' : 'Online Payment'}</p>
             </div>
             
@@ -210,8 +207,8 @@ const PaymentPage = () => {
             </div>
             
             <div class="footer">
-              <p>Thank you for shopping with AgriPay!</p>
-              <p>For any queries, please contact support@agripay.com</p>
+              <p>Thank you for shopping with DostanFarms!</p>
+              <p>For any queries, please contact support@dostanfarms.com</p>
             </div>
           </div>
           
@@ -245,26 +242,31 @@ const PaymentPage = () => {
       return;
     }
     
-    // Simulate coupon validation (in a real app, this would check the database)
-    if (couponCode.toUpperCase() === 'WELCOME200') {
-      // Apply flat discount
-      setDiscount(200);
-      toast({
-        title: "Coupon applied",
-        description: "₹200 discount has been applied to your order"
-      });
-    } else if (couponCode.toUpperCase() === 'SUMMER10') {
-      // Apply percentage discount (10% with max limit of 500)
-      const discountAmount = Math.min(subtotal * 0.1, 500);
+    // Get active coupons from localStorage
+    const activeCoupons = getActiveCoupons();
+    const coupon = activeCoupons.find((c: any) => c.code.toUpperCase() === couponCode.toUpperCase());
+    
+    if (coupon) {
+      let discountAmount = 0;
+      
+      if (coupon.discountType === 'flat') {
+        discountAmount = coupon.discountValue;
+      } else if (coupon.discountType === 'percentage') {
+        discountAmount = (subtotal * coupon.discountValue) / 100;
+        if (coupon.maxDiscountLimit) {
+          discountAmount = Math.min(discountAmount, coupon.maxDiscountLimit);
+        }
+      }
+      
       setDiscount(discountAmount);
       toast({
         title: "Coupon applied",
-        description: `₹${discountAmount} discount has been applied to your order`
+        description: `₹${discountAmount.toFixed(2)} discount has been applied to your order`
       });
     } else {
       toast({
         title: "Invalid coupon",
-        description: "The coupon code you entered is invalid",
+        description: "The coupon code you entered is invalid or expired",
         variant: "destructive"
       });
     }
@@ -281,17 +283,26 @@ const PaymentPage = () => {
       return;
     }
     
+    if (!customerName.trim() || !customerMobile.trim()) {
+      toast({
+        title: "Missing customer information",
+        description: "Please enter customer name and mobile number",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsProcessing(true);
     
     // Simulate checkout process
     setTimeout(() => {
-      // Create order object
       const newOrderId = `ORD${Math.floor(100000 + Math.random() * 900000)}`;
       setOrderId(newOrderId);
       
       const order = {
         id: newOrderId,
-        customerId: customer.id,
+        customerName,
+        customerMobile,
         items: cartItems.map(item => ({
           name: item.name,
           quantity: item.quantity,
@@ -300,11 +311,11 @@ const PaymentPage = () => {
         totalAmount: total,
         status: 'placed',
         date: new Date().toISOString(),
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         paymentMethod
       };
       
-      // Store order (in a real app, this would save to the database)
+      // Store order
       const orders = JSON.parse(localStorage.getItem('orders') || '[]');
       orders.push(order);
       localStorage.setItem('orders', JSON.stringify(orders));
@@ -314,7 +325,6 @@ const PaymentPage = () => {
       
       setIsProcessing(false);
       
-      // Show success message
       toast({
         title: "Order placed successfully",
         description: `Your order #${order.id} has been placed`
@@ -340,12 +350,43 @@ const PaymentPage = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5 text-agri-primary" />
-              <span className="text-lg font-bold">AgriPay</span>
+              <span className="text-lg font-bold">DostanFarms</span>
             </div>
           </div>
         </header>
         
         <div className="container mx-auto max-w-md">
+          {/* Customer Information Card */}
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle>Customer Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customer-name">Customer Name</Label>
+                  <Input
+                    id="customer-name"
+                    placeholder="Enter customer name"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customer-mobile">Mobile Number</Label>
+                  <Input
+                    id="customer-mobile"
+                    placeholder="Enter mobile number"
+                    value={customerMobile}
+                    onChange={(e) => setCustomerMobile(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="mb-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -407,20 +448,6 @@ const PaymentPage = () => {
           
           <Card className="mb-4">
             <CardHeader>
-              <CardTitle>Shipping Address</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                <p className="font-medium">{customer.name}</p>
-                <p className="text-sm">{customer.address}</p>
-                <p className="text-sm">Pincode: {customer.pincode}</p>
-                <p className="text-sm">Phone: {customer.mobile}</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="mb-4">
-            <CardHeader>
               <CardTitle>Apply Coupon</CardTitle>
             </CardHeader>
             <CardContent>
@@ -439,7 +466,7 @@ const PaymentPage = () => {
               </div>
               {discount > 0 && (
                 <p className="mt-2 text-sm text-green-600">
-                  Coupon applied: ₹{discount} discount
+                  Coupon applied: ₹{discount.toFixed(2)} discount
                 </p>
               )}
             </CardContent>
@@ -475,7 +502,7 @@ const PaymentPage = () => {
             <CardContent className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>₹{subtotal}</span>
+                <span>₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax (5%)</span>
@@ -488,7 +515,7 @@ const PaymentPage = () => {
               {discount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Discount</span>
-                  <span>-₹{discount}</span>
+                  <span>-₹{discount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold pt-2 border-t mt-2">
@@ -500,7 +527,7 @@ const PaymentPage = () => {
               <Button
                 className="w-full bg-agri-primary hover:bg-agri-secondary"
                 onClick={handleCheckout}
-                disabled={isProcessing || cartItems.length === 0}
+                disabled={isProcessing || cartItems.length === 0 || !customerName.trim() || !customerMobile.trim()}
               >
                 {isProcessing ? "Processing..." : "Place Order"}
               </Button>
@@ -518,7 +545,6 @@ const PaymentPage = () => {
             </CardFooter>
           </Card>
           
-          {/* Hidden receipt for printing */}
           <div className="hidden" ref={printReceiptRef}></div>
         </div>
       </div>

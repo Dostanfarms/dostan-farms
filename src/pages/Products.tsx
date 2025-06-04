@@ -236,7 +236,7 @@ const Products = () => {
                   <h3 className="font-semibold text-green-800 mb-2">Product Found:</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div><strong>Name:</strong> {scannedProduct.name}</div>
-                    <div><strong>Unit:</strong> {scannedProduct.unit}</div>
+                    <div><strong>Quantity:</strong> {scannedProduct.quantity} {scannedProduct.unit}</div>
                     <div><strong>Price:</strong> ₹{scannedProduct.pricePerUnit}</div>
                   </div>
                 </div>
@@ -264,62 +264,59 @@ const Products = () => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden">
+                <Card key={product.id} className="overflow-hidden w-[200px] h-[280px]">
                   <CardHeader className="bg-muted pb-2">
-                    <CardTitle className="text-lg">
+                    <CardTitle className="text-sm truncate">
                       {product.name}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="space-y-4">
-                      {/* Adjusted Barcode Display */}
+                    <div className="space-y-3">
+                      {/* Barcode Display */}
                       {product.barcode && (
                         <div className="text-center p-2 bg-white rounded-lg border">
                           <div className="mb-2">
                             <Barcode128 
                               value={product.barcode}
                               format="CODE128"
-                              width={1.5}
-                              height={40}
+                              width={1}
+                              height={30}
                               displayValue={true}
-                              fontSize={10}
-                              margin={5}
+                              fontSize={8}
+                              margin={2}
                             />
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => printBarcode(product)}
-                            className="w-full mt-2"
+                            className="w-full mt-1"
                           >
-                            <Printer className="h-4 w-4 mr-2" /> Print
+                            <Printer className="h-3 w-3 mr-1" /> Print
                           </Button>
                         </div>
                       )}
                       
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Quantity:</span>
-                          <span className="font-semibold">{product.quantity} {product.unit}</span>
+                          <span className="text-xs text-muted-foreground">Quantity:</span>
+                          <span className="text-xs font-semibold">{product.quantity} {product.unit}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Unit:</span>
-                          <span>{product.unit}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Price/Unit:</span>
-                          <span className="font-semibold">₹{product.pricePerUnit}</span>
+                          <span className="text-xs text-muted-foreground">Price/Unit:</span>
+                          <span className="text-xs font-semibold">₹{product.pricePerUnit}</span>
                         </div>
                       </div>
                       
-                      <div className="flex gap-2 mt-4">
+                      <div className="flex gap-1 mt-3">
                         <Button 
-                          className="flex-1 bg-agri-primary hover:bg-agri-secondary" 
+                          size="sm"
+                          className="flex-1 bg-agri-primary hover:bg-agri-secondary text-xs" 
                           onClick={() => handleEditProduct(product)}
                         >
-                          <Edit className="h-4 w-4 mr-2" /> Edit
+                          <Edit className="h-3 w-3 mr-1" /> Edit
                         </Button>
                       </div>
                     </div>
