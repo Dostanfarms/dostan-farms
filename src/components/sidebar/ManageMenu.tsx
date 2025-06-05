@@ -15,8 +15,12 @@ import {
   Receipt, 
   Settings,
   UserCog,
-  Users,
-  UserCheck
+  Package,
+  ShoppingCart,
+  BarChart3,
+  Ticket,
+  Gift,
+  DollarSign
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
@@ -30,7 +34,7 @@ const ManageMenu = () => {
 
   // Open the manage menu if current location is under any manage item
   useEffect(() => {
-    const managePathsToCheck = ['/transactions', '/employees', '/roles', '/customers', '/farmers'];
+    const managePathsToCheck = ['/products', '/coupons', '/tickets', '/sales-dashboard', '/settlements', '/transactions', '/employees', '/roles'];
     if (managePathsToCheck.some(path => location.pathname.startsWith(path))) {
       setManageOpen(true);
     }
@@ -39,16 +43,34 @@ const ManageMenu = () => {
   // Items in the "Manage" section
   const manageItems = [
     {
-      title: 'Customers',
-      icon: <Users className="h-5 w-5" />,
-      path: '/customers',
-      resource: 'customers'
+      title: 'Products',
+      icon: <Package className="h-5 w-5" />,
+      path: '/products',
+      resource: 'products'
     },
     {
-      title: 'Farmers',
-      icon: <UserCheck className="h-5 w-5" />,
-      path: '/farmers',
-      resource: 'farmers'
+      title: 'Coupons',
+      icon: <Gift className="h-5 w-5" />,
+      path: '/coupons',
+      resource: 'coupons'
+    },
+    {
+      title: 'Tickets',
+      icon: <Ticket className="h-5 w-5" />,
+      path: '/tickets',
+      resource: 'tickets'
+    },
+    {
+      title: 'Sales Dashboard',
+      icon: <BarChart3 className="h-5 w-5" />,
+      path: '/sales-dashboard',
+      resource: 'sales'
+    },
+    {
+      title: 'Settlements',
+      icon: <DollarSign className="h-5 w-5" />,
+      path: '/settlements',
+      resource: 'settlements'
     },
     {
       title: 'Transactions',

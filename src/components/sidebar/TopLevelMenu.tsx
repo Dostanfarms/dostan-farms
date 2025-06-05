@@ -1,7 +1,9 @@
 
 import React from 'react';
 import { 
-  BarChart3
+  BarChart3,
+  Users,
+  UserCheck
 } from 'lucide-react';
 import { 
   SidebarGroup, 
@@ -36,6 +38,20 @@ const TopLevelMenu = () => {
       url: "/dashboard",
       icon: BarChart3,
       resource: "dashboard",
+      action: "view" as const
+    },
+    {
+      title: "Customers",
+      url: "/customers",
+      icon: Users,
+      resource: "customers",
+      action: "view" as const
+    },
+    {
+      title: "Farmers",
+      url: "/farmers",
+      icon: UserCheck,
+      resource: "farmers",
       action: "view" as const
     }
   ];
