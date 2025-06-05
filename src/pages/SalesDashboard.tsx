@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,13 +85,12 @@ const SalesDashboardContent = () => {
       return;
     }
 
-    // Convert cart to the format expected by PaymentPage
+    // Convert cart to the format expected by PaymentPage - removed the non-existent image property
     const cartItems = cart.map(item => ({
       id: item.product.id,
       name: item.product.name,
       price: item.product.pricePerUnit,
-      quantity: item.quantity,
-      image: item.product.image
+      quantity: item.quantity
     }));
 
     const total = calculateTotal();
