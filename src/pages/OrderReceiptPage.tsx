@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Download, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Printer, Plus, ArrowLeft } from 'lucide-react';
 
 const OrderReceiptPage = () => {
   const location = useLocation();
@@ -29,10 +29,14 @@ const OrderReceiptPage = () => {
     window.print();
   };
 
+  const handleNewSale = () => {
+    navigate('/sales-dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-muted/30 p-4">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 print:hidden">
           <Button variant="outline" size="icon" onClick={() => navigate('/sales-dashboard')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -48,6 +52,13 @@ const OrderReceiptPage = () => {
             <p className="text-muted-foreground">Transaction ID: {transaction.id}</p>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Store Header */}
+            <div className="text-center border-b pb-4">
+              <h2 className="text-xl font-bold">Dostan Farms</h2>
+              <p className="text-sm text-muted-foreground">Fresh Farm Products</p>
+              <p className="text-sm text-muted-foreground">Phone: +91 12345 67890</p>
+            </div>
+
             {/* Customer Details */}
             <div>
               <h3 className="font-semibold mb-2">Customer Details</h3>
@@ -98,13 +109,24 @@ const OrderReceiptPage = () => {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-4">
+            {/* Thank You Message */}
+            <div className="text-center py-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Thank you for shopping with us!
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Visit again for fresh farm products
+              </p>
+            </div>
+
+            {/* Actions - Print and New Sale */}
+            <div className="flex gap-4 print:hidden">
               <Button variant="outline" onClick={handlePrint} className="flex-1">
-                <Download className="h-4 w-4 mr-2" />
+                <Printer className="h-4 w-4 mr-2" />
                 Print Receipt
               </Button>
-              <Button onClick={() => navigate('/sales-dashboard')} className="flex-1">
+              <Button onClick={handleNewSale} className="flex-1 bg-green-600 hover:bg-green-700">
+                <Plus className="h-4 w-4 mr-2" />
                 New Sale
               </Button>
             </div>

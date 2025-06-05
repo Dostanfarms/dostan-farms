@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CreditCard, ShoppingCart, Tag } from 'lucide-react';
+import { ArrowLeft, CreditCard, ShoppingCart, Tag, Smartphone } from 'lucide-react';
+import QRCode from 'react-qr-code';
 
 interface CartItem {
   id: string;
@@ -18,11 +19,13 @@ interface CartItem {
 }
 
 interface Coupon {
-  id: string;
   code: string;
-  discount: number;
-  type: 'percentage' | 'fixed';
-  isActive: boolean;
+  discountType: 'percentage' | 'flat';
+  discountValue: number;
+  maxDiscountLimit?: number;
+  expiryDate: string;
+  targetType?: 'all' | 'customer' | 'employee';
+  targetUserId?: string;
 }
 
 const PaymentPage = () => {
@@ -36,23 +39,34 @@ const PaymentPage = () => {
   const [selectedCoupon, setSelectedCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [showUPIScanner, setShowUPIScanner] = useState(false);
 
   // Get cart data from navigation state
   const cartItems: CartItem[] = location.state?.cartItems || [];
   const originalTotal: number = location.state?.total || 0;
 
   useEffect(() => {
-    // Load coupons from localStorage
+    // Load active coupons from localStorage (from coupons management page)
     const savedCoupons = localStorage.getItem('coupons');
     if (savedCoupons) {
       try {
         const parsedCoupons = JSON.parse(savedCoupons);
-        setCoupons(parsedCoupons.filter((coupon: Coupon) => coupon.isActive));
+        // Filter only active coupons (not expired)
+        const activeCoupons = parsedCoupons.filter((coupon: Coupon) => {
+          const expiryDate = new Date(coupon.expiryDate);
+          return expiryDate > new Date();
+        });
+        setCoupons(activeCoupons);
       } catch (error) {
         console.error('Error loading coupons:', error);
       }
     }
   }, []);
+
+  useEffect(() => {
+    // Show UPI scanner when UPI is selected
+    setShowUPIScanner(paymentMethod === 'upi');
+  }, [paymentMethod]);
 
   const applyCoupon = () => {
     if (!selectedCoupon) {
@@ -64,7 +78,7 @@ const PaymentPage = () => {
       return;
     }
 
-    const coupon = coupons.find(c => c.id === selectedCoupon);
+    const coupon = coupons.find(c => c.code === selectedCoupon);
     if (coupon) {
       setAppliedCoupon(coupon);
       toast({
@@ -86,10 +100,13 @@ const PaymentPage = () => {
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0;
     
-    if (appliedCoupon.type === 'percentage') {
-      return (originalTotal * appliedCoupon.discount) / 100;
+    if (appliedCoupon.discountType === 'percentage') {
+      const discountAmount = (originalTotal * appliedCoupon.discountValue) / 100;
+      return appliedCoupon.maxDiscountLimit 
+        ? Math.min(discountAmount, appliedCoupon.maxDiscountLimit)
+        : discountAmount;
     } else {
-      return Math.min(appliedCoupon.discount, originalTotal);
+      return Math.min(appliedCoupon.discountValue, originalTotal);
     }
   };
 
@@ -124,28 +141,28 @@ const PaymentPage = () => {
     }
 
     // Create transaction data
-    const transactionData = {
+    const transaction = {
       id: Date.now().toString(),
       customerName,
       customerMobile,
       items: cartItems,
-      originalTotal,
+      subtotal: originalTotal,
       discount: calculateDiscount(),
-      finalTotal,
-      appliedCoupon: appliedCoupon?.code || null,
+      total: finalTotal,
+      couponUsed: appliedCoupon?.code || null,
       paymentMethod,
-      date: new Date(),
+      timestamp: new Date().toISOString(),
       status: 'completed'
     };
 
     // Save transaction to localStorage
     const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    existingTransactions.push(transactionData);
+    existingTransactions.push(transaction);
     localStorage.setItem('transactions', JSON.stringify(existingTransactions));
 
     // Navigate to receipt page
     navigate('/order-receipt', {
-      state: { transactionData }
+      state: { transaction }
     });
   };
 
@@ -226,6 +243,25 @@ const PaymentPage = () => {
                     <SelectItem value="upi">UPI</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {/* UPI Scanner */}
+                {showUPIScanner && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <Smartphone className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium text-blue-600">Scan QR Code to Pay</span>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg inline-block">
+                      <QRCode
+                        value={`upi://pay?pa=merchant@upi&pn=${customerName}&am=${finalTotal}&cu=INR&tn=Payment for Order ${Date.now()}`}
+                        size={200}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Amount: ₹{finalTotal.toFixed(2)}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -240,7 +276,7 @@ const PaymentPage = () => {
                       <Tag className="h-4 w-4 text-green-600" />
                       <span className="font-medium">{appliedCoupon.code}</span>
                       <Badge variant="secondary">
-                        {appliedCoupon.type === 'percentage' ? `${appliedCoupon.discount}%` : `₹${appliedCoupon.discount}`}
+                        {appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountValue}%` : `₹${appliedCoupon.discountValue}`}
                       </Badge>
                     </div>
                     <Button variant="ghost" size="sm" onClick={removeCoupon}>
@@ -249,21 +285,29 @@ const PaymentPage = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <Select value={selectedCoupon} onValueChange={setSelectedCoupon}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a coupon" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {coupons.map((coupon) => (
-                          <SelectItem key={coupon.id} value={coupon.id}>
-                            {coupon.code} - {coupon.type === 'percentage' ? `${coupon.discount}%` : `₹${coupon.discount}`} off
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={applyCoupon} variant="outline" className="w-full">
-                      Apply Coupon
-                    </Button>
+                    {coupons.length > 0 ? (
+                      <>
+                        <Select value={selectedCoupon} onValueChange={setSelectedCoupon}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a coupon" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {coupons.map((coupon) => (
+                              <SelectItem key={coupon.code} value={coupon.code}>
+                                {coupon.code} - {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`} off
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button onClick={applyCoupon} variant="outline" className="w-full">
+                          Apply Coupon
+                        </Button>
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No active coupons available
+                      </p>
+                    )}
                   </div>
                 )}
               </CardContent>
