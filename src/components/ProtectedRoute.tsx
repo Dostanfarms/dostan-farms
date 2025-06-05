@@ -19,6 +19,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ resource, action, child
     action 
   });
 
+  // Handle customer routes differently
+  if (resource === 'customer') {
+    const currentCustomer = localStorage.getItem('currentCustomer');
+    if (!currentCustomer) {
+      console.log('No current customer, redirecting to customer login');
+      return <Navigate to="/customer-login" replace />;
+    }
+    return children ? <>{children}</> : <Outlet />;
+  }
+
+  // Handle farmer routes differently  
+  if (resource === 'farmers' && !currentUser) {
+    const currentFarmer = localStorage.getItem('currentFarmer');
+    if (currentFarmer) {
+      return children ? <>{children}</> : <Outlet />;
+    }
+  }
+
   if (!currentUser) {
     console.log('No current user, redirecting to login');
     return <Navigate to="/employee-login" replace />;

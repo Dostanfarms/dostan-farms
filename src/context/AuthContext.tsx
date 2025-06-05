@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface AuthContextProps {
@@ -105,7 +104,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       try {
         const employees = JSON.parse(registeredEmployees);
         console.log('Registered employees:', employees);
-        // Ensure all registered employees have proper structure
+        // Ensure all registered employees have proper structure and default roles
         const formattedEmployees = employees.map((emp: any) => ({
           id: emp.id,
           name: emp.name,

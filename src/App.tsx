@@ -60,6 +60,7 @@ function App() {
                 <CustomerHome />
               </ProtectedRoute>
             } />
+            <Route path="/customer-home" element={<CustomerHome />} />
             <Route path="/customer/profile" element={
               <ProtectedRoute resource="customer" action="view">
                 <CustomerProfile />
@@ -90,6 +91,7 @@ function App() {
                 <OrderReceiptPage />
               </ProtectedRoute>
             } />
+            <Route path="/order-receipt" element={<OrderReceiptPage />} />
             <Route path="/customer/tickets" element={
               <ProtectedRoute resource="customer" action="view">
                 <CustomerTicketHistory />
@@ -97,11 +99,7 @@ function App() {
             } />
             
             {/* Farmer routes */}
-            <Route path="/farmer-dashboard" element={
-              <ProtectedRoute resource="farmers" action="view">
-                <FarmerDashboard />
-              </ProtectedRoute>
-            } />
+            <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
             <Route path="/farmer/:id" element={
               <ProtectedRoute resource="farmers" action="view">
                 <FarmerDetails />
@@ -137,6 +135,11 @@ function App() {
             <Route path="/sales-dashboard" element={
               <ProtectedRoute resource="sales" action="view">
                 <SalesDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/payment" element={
+              <ProtectedRoute resource="sales" action="view">
+                <PaymentPage />
               </ProtectedRoute>
             } />
             <Route path="/transactions" element={
