@@ -1,8 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface AuthContextProps {
   user: User | null;
-  login: (user: User) => void;
+  currentUser: User | null; // Add this for backward compatibility
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   checkPermission: (resource: string, action: string) => boolean;
 }
@@ -63,6 +65,13 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Mock users for demo purposes
+const mockUsers = [
+  { id: '1', name: 'Admin User', email: 'admin@dostanfarms.com', role: 'admin' },
+  { id: '2', name: 'Sales Executive', email: 'sales@dostanfarms.com', role: 'sales_executive' },
+  { id: '3', name: 'Manager User', email: 'manager@dostanfarms.com', role: 'manager' }
+];
+
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem('user');
@@ -85,8 +94,18 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [user]);
 
-  const login = (user: User) => {
-    setUser(user);
+  const login = async (username: string, password: string): Promise<boolean> => {
+    // Simple mock authentication
+    const foundUser = mockUsers.find(u => 
+      u.email === username || u.name.toLowerCase().replace(' ', '') === username.toLowerCase()
+    );
+    
+    if (foundUser && password === 'password') {
+      setUser(foundUser);
+      return true;
+    }
+    
+    return false;
   };
 
   const logout = () => {
@@ -107,6 +126,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const value: AuthContextProps = {
     user,
+    currentUser: user, // Provide currentUser as alias for backward compatibility
     login,
     logout,
     checkPermission,
