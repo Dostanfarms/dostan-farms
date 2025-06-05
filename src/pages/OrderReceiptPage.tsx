@@ -1,148 +1,114 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
-} from '@/components/ui/card';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Package, 
-  CheckCircle,
-  ShoppingBag,
-  Truck
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { Order } from '@/utils/types';
+import { CheckCircle, Download, ArrowLeft } from 'lucide-react';
 
 const OrderReceiptPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const [order, setOrder] = useState<Order | null>(null);
-  
-  // Get customer data from localStorage
-  const customerString = localStorage.getItem('currentCustomer');
-  const customer = customerString ? JSON.parse(customerString) : null;
-  
-  // Load order data
-  useEffect(() => {
-    if (id) {
-      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-      const foundOrder = orders.find((o: Order) => o.id === id);
-      setOrder(foundOrder || null);
-    }
-  }, [id]);
-  
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!customer) {
-      navigate('/customer-login');
-    }
-  }, [customer, navigate]);
-  
-  if (!customer || !order) {
+  const { transaction } = location.state || {};
+
+  if (!transaction) {
     return (
-      <div className="min-h-screen bg-muted/30 p-4 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <h3 className="text-lg font-medium mb-1">Order not found</h3>
-              <p className="text-muted-foreground mb-4">The order you're looking for doesn't exist</p>
-              <Button 
-                onClick={() => navigate('/order-history')}
-                className="bg-agri-primary hover:bg-agri-secondary"
-              >
-                Go to Order History
-              </Button>
-            </div>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground mb-4">No transaction data found</p>
+            <Button onClick={() => navigate('/sales-dashboard')}>
+              Back to Sales Dashboard
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
-  
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-muted/30 p-4">
-      <div className="container mx-auto max-w-md">
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" size="icon" onClick={() => navigate('/sales-dashboard')}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">Order Receipt</h1>
+        </div>
+
         <Card>
-          <CardHeader className="text-center border-b">
-            <div className="flex justify-center mb-2">
-              <div className="bg-green-100 text-green-600 rounded-full p-3">
-                <CheckCircle className="h-8 w-8" />
-              </div>
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="h-16 w-16 text-green-600" />
             </div>
-            <CardTitle className="text-2xl">Order Confirmed!</CardTitle>
-            <p className="text-muted-foreground">Your order has been placed successfully</p>
+            <CardTitle className="text-green-600">Payment Successful!</CardTitle>
+            <p className="text-muted-foreground">Transaction ID: {transaction.id}</p>
           </CardHeader>
-          
-          <CardContent className="pt-6 space-y-6">
+          <CardContent className="space-y-6">
+            {/* Customer Details */}
             <div>
-              <h3 className="font-medium mb-2 flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4" />
-                Order Details
-              </h3>
-              <div className="bg-muted rounded-lg p-3">
-                <p><span className="font-medium">Order ID:</span> #{order.id}</p>
-                <p><span className="font-medium">Date:</span> {format(new Date(order.date), 'dd MMM yyyy')}</p>
-                <p><span className="font-medium">Payment Method:</span> {order.paymentMethod === 'cash' ? 'Cash on Delivery' : 'Online Payment'}</p>
+              <h3 className="font-semibold mb-2">Customer Details</h3>
+              <div className="bg-muted p-3 rounded-md">
+                <p><strong>Name:</strong> {transaction.customerName}</p>
+                <p><strong>Mobile:</strong> {transaction.customerMobile}</p>
+                <p><strong>Payment Method:</strong> {transaction.paymentMethod.toUpperCase()}</p>
+                <p><strong>Date:</strong> {new Date(transaction.timestamp).toLocaleString()}</p>
               </div>
             </div>
-            
+
+            {/* Items */}
             <div>
-              <h3 className="font-medium mb-2">Order Summary</h3>
+              <h3 className="font-semibold mb-2">Items Purchased</h3>
               <div className="space-y-2">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span>{item.name} × {item.quantity}</span>
-                    <span>₹{item.price}</span>
+                {transaction.items.map((item: any, index: number) => (
+                  <div key={index} className="flex justify-between items-center py-2 border-b">
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        ₹{item.price} × {item.quantity}
+                      </p>
+                    </div>
+                    <span>₹{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
-                <div className="flex justify-between font-medium border-t pt-2 mt-2">
-                  <span>Total</span>
-                  <span>₹{order.totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Payment Summary */}
+            <div>
+              <h3 className="font-semibold mb-2">Payment Summary</h3>
+              <div className="bg-muted p-3 rounded-md space-y-1">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>₹{transaction.subtotal.toFixed(2)}</span>
+                </div>
+                {transaction.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount {transaction.couponUsed ? `(${transaction.couponUsed})` : ''}:</span>
+                    <span>-₹{transaction.discount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg border-t pt-1">
+                  <span>Total Paid:</span>
+                  <span>₹{transaction.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
-            
-            <div>
-              <h3 className="font-medium mb-2 flex items-center gap-2">
-                <Truck className="h-4 w-4" />
-                Delivery Information
-              </h3>
-              <div className="bg-muted rounded-lg p-3">
-                <p><span className="font-medium">Delivery Address:</span></p>
-                <p>{customer.name}</p>
-                <p>{customer.address}</p>
-                <p>PIN: {customer.pincode}</p>
-                <p>Phone: {customer.mobile}</p>
-                
-                <div className="mt-3">
-                  <p><span className="font-medium">Estimated Delivery:</span></p>
-                  <p>{order.estimatedDelivery ? format(new Date(order.estimatedDelivery), 'dd MMM yyyy') : 'To be determined'}</p>
-                </div>
-              </div>
+
+            {/* Actions */}
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={handlePrint} className="flex-1">
+                <Download className="h-4 w-4 mr-2" />
+                Print Receipt
+              </Button>
+              <Button onClick={() => navigate('/sales-dashboard')} className="flex-1">
+                New Sale
+              </Button>
             </div>
           </CardContent>
-          
-          <CardFooter className="flex flex-col gap-2">
-            <Button 
-              onClick={() => navigate(`/order-tracking/${order.id}`)}
-              className="w-full bg-agri-primary hover:bg-agri-secondary"
-            >
-              Track Order
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/customer-home')}
-              className="w-full"
-            >
-              Continue Shopping
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </div>

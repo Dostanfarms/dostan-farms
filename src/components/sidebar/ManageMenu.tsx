@@ -14,7 +14,9 @@ import {
   ChevronUp, 
   Receipt, 
   Settings,
-  UserCog
+  UserCog,
+  Users,
+  UserCheck
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
@@ -28,14 +30,26 @@ const ManageMenu = () => {
 
   // Open the manage menu if current location is under any manage item
   useEffect(() => {
-    const managePathsToCheck = ['/transactions', '/employees', '/roles'];
+    const managePathsToCheck = ['/transactions', '/employees', '/roles', '/customers', '/farmers'];
     if (managePathsToCheck.some(path => location.pathname.startsWith(path))) {
       setManageOpen(true);
     }
   }, [location.pathname]);
 
-  // Items in the "Manage" section - removed products, sales dashboard, sales, tickets, coupons
+  // Items in the "Manage" section
   const manageItems = [
+    {
+      title: 'Customers',
+      icon: <Users className="h-5 w-5" />,
+      path: '/customers',
+      resource: 'customers'
+    },
+    {
+      title: 'Farmers',
+      icon: <UserCheck className="h-5 w-5" />,
+      path: '/farmers',
+      resource: 'farmers'
+    },
     {
       title: 'Transactions',
       icon: <Receipt className="h-5 w-5" />,

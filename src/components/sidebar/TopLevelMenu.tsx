@@ -1,14 +1,7 @@
 
 import React from 'react';
 import { 
-  BarChart3, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  UserCheck, 
-  Receipt, 
-  Ticket,
-  Gift
+  BarChart3
 } from 'lucide-react';
 import { 
   SidebarGroup, 
@@ -43,55 +36,6 @@ const TopLevelMenu = () => {
       url: "/dashboard",
       icon: BarChart3,
       resource: "dashboard",
-      action: "view" as const
-    },
-    {
-      title: "Products",
-      url: "/products",
-      icon: Package,
-      resource: "products",
-      action: "view" as const
-    },
-    {
-      title: "Sales Dashboard",
-      url: "/sales-dashboard",
-      icon: ShoppingCart,
-      resource: "sales",
-      action: "view" as const
-    },
-    {
-      title: "Sales",
-      url: "/sales",
-      icon: Receipt,
-      resource: "sales",
-      action: "view" as const
-    },
-    {
-      title: "Customers",
-      url: "/customers",
-      icon: Users,
-      resource: "customers",
-      action: "view" as const
-    },
-    {
-      title: "Farmers",
-      url: "/farmers",
-      icon: UserCheck,
-      resource: "farmers",
-      action: "view" as const
-    },
-    {
-      title: "Tickets",
-      url: "/tickets",
-      icon: Ticket,
-      resource: "tickets",
-      action: "view" as const
-    },
-    {
-      title: "Coupons",
-      url: "/coupons",
-      icon: Gift,
-      resource: "coupons",
       action: "view" as const
     }
   ];

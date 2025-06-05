@@ -95,6 +95,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [user]);
 
   const login = async (username: string, password: string): Promise<boolean> => {
+    console.log('Login attempt:', { username, password });
+    
     // First check registered employees from localStorage
     const registeredEmployees = localStorage.getItem('registeredEmployees');
     let allUsers = [...mockUsers];
@@ -102,22 +104,38 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     if (registeredEmployees) {
       try {
         const employees = JSON.parse(registeredEmployees);
-        allUsers = [...allUsers, ...employees];
+        console.log('Registered employees:', employees);
+        // Ensure all registered employees have proper structure
+        const formattedEmployees = employees.map((emp: any) => ({
+          id: emp.id,
+          name: emp.name,
+          email: emp.email || `${emp.name.toLowerCase().replace(/\s+/g, '')}@dostanfarms.com`,
+          role: emp.role || 'sales_executive'
+        }));
+        allUsers = [...allUsers, ...formattedEmployees];
       } catch (error) {
         console.error('Error parsing registered employees:', error);
       }
     }
     
+    console.log('All users available for login:', allUsers);
+    
     // Simple authentication - check both email and name
     const foundUser = allUsers.find(u => 
-      u.email === username || u.name.toLowerCase().replace(' ', '') === username.toLowerCase()
+      u.email === username || 
+      u.name.toLowerCase().replace(/\s+/g, '') === username.toLowerCase() ||
+      u.name.toLowerCase() === username.toLowerCase()
     );
     
+    console.log('Found user:', foundUser);
+    
     if (foundUser && password === 'password') {
+      console.log('Login successful for:', foundUser);
       setUser(foundUser);
       return true;
     }
     
+    console.log('Login failed - no matching user or wrong password');
     return false;
   };
 
