@@ -4,30 +4,21 @@ import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import Sidebar from '@/components/Sidebar';
 import { getProductsFromLocalStorage } from '@/utils/employeeData';
 import { Product } from '@/utils/types';
-import { Search, Plus, Package, ShoppingCart, Trash2, Receipt, CreditCard, Smartphone, QrCode, IndianRupee, Printer } from 'lucide-react';
+import { Search, Package, ShoppingCart, Trash2, Receipt } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import QRCode from 'react-qr-code';
+import { useNavigate } from 'react-router-dom';
 
 const SalesDashboardContent = () => {
   const { toast } = useToast();
   const { setOpenMobile } = useSidebar();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [products] = useState<Product[]>(getProductsFromLocalStorage());
   const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
-  const [quantityInput, setQuantityInput] = useState('1');
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
-  const [cashReceived, setCashReceived] = useState('');
-  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
-  const [lastSaleData, setLastSaleData] = useState<any>(null);
-  const receiptRef = useRef<HTMLDivElement>(null);
 
   // Close sidebar automatically when component mounts
   React.useEffect(() => {
@@ -85,172 +76,34 @@ const SalesDashboardContent = () => {
     setCart([]);
   };
 
-  const processPayment = () => {
+  const handleCheckout = () => {
     if (cart.length === 0) {
       toast({
         title: "Empty cart",
-        description: "Please add items to cart before processing payment",
+        description: "Please add items to cart before checkout",
         variant: "destructive"
       });
       return;
     }
 
+    // Convert cart to the format expected by PaymentPage
+    const cartItems = cart.map(item => ({
+      id: item.product.id,
+      name: item.product.name,
+      price: item.product.pricePerUnit,
+      quantity: item.quantity,
+      image: item.product.image
+    }));
+
     const total = calculateTotal();
-    
-    if (selectedPaymentMethod === 'cash') {
-      const received = parseFloat(cashReceived);
-      if (isNaN(received) || received < total) {
-        toast({
-          title: "Insufficient cash",
-          description: "Please enter a valid amount greater than or equal to the total",
-          variant: "destructive"
-        });
-        return;
+
+    // Navigate to payment page with cart data
+    navigate('/payment', {
+      state: {
+        cartItems,
+        total
       }
-    }
-
-    const saleData = {
-      items: cart,
-      total,
-      paymentMethod: selectedPaymentMethod,
-      cashReceived: selectedPaymentMethod === 'cash' ? parseFloat(cashReceived) : total,
-      change: selectedPaymentMethod === 'cash' ? parseFloat(cashReceived) - total : 0,
-      timestamp: new Date(),
-      receiptNumber: Math.floor(Math.random() * 1000000)
-    };
-
-    setLastSaleData(saleData);
-    setIsPaymentDialogOpen(false);
-    setIsReceiptDialogOpen(true);
-    clearCart();
-    setCashReceived('');
-
-    toast({
-      title: "Payment successful",
-      description: `Sale completed successfully. Total: ₹${total.toFixed(2)}`,
     });
-  };
-
-  const printReceipt = () => {
-    if (receiptRef.current) {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.open();
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Receipt</title>
-              <style>
-                body { font-family: Arial, sans-serif; }
-                .receipt { max-width: 300px; margin: 0 auto; }
-                .center { text-align: center; }
-                .item { display: flex; justify-content: space-between; margin: 5px 0; }
-                .total { border-top: 2px solid #000; padding-top: 10px; font-weight: bold; }
-              </style>
-            </head>
-            <body>
-              ${receiptRef.current.innerHTML}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-        printWindow.close();
-      }
-    }
-  };
-
-  const generateUpiPaymentUri = () => {
-    const total = calculateTotal();
-    return `upi://pay?pa=2755c@ybl&pn=DostanfarmsStore&am=${total.toFixed(2)}&cu=INR&tn=Purchase at Dostanfarms Store`;
-  };
-
-  const renderPaymentOptions = () => {
-    const total = calculateTotal();
-    
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-3">
-          <Button
-            variant={selectedPaymentMethod === 'cash' ? 'default' : 'outline'}
-            onClick={() => setSelectedPaymentMethod('cash')}
-            className="flex flex-col items-center p-4 h-auto"
-          >
-            <IndianRupee className="h-6 w-6 mb-2" />
-            <span className="text-sm">Cash</span>
-          </Button>
-          
-          <Button
-            variant={selectedPaymentMethod === 'upi' ? 'default' : 'outline'}
-            onClick={() => setSelectedPaymentMethod('upi')}
-            className="flex flex-col items-center p-4 h-auto"
-          >
-            <Smartphone className="h-6 w-6 mb-2" />
-            <span className="text-sm">UPI</span>
-          </Button>
-          
-          <Button
-            variant={selectedPaymentMethod === 'card' ? 'default' : 'outline'}
-            onClick={() => setSelectedPaymentMethod('card')}
-            className="flex flex-col items-center p-4 h-auto"
-          >
-            <CreditCard className="h-6 w-6 mb-2" />
-            <span className="text-sm">Card</span>
-          </Button>
-        </div>
-
-        {selectedPaymentMethod === 'cash' && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Cash Received</label>
-            <Input
-              type="number"
-              placeholder="Enter amount received"
-              value={cashReceived}
-              onChange={(e) => setCashReceived(e.target.value)}
-              min={total}
-              step="0.01"
-            />
-            {cashReceived && parseFloat(cashReceived) >= total && (
-              <div className="text-sm text-muted-foreground">
-                Change: ₹{(parseFloat(cashReceived) - total).toFixed(2)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {selectedPaymentMethod === 'upi' && (
-          <div className="text-center space-y-4">
-            <div className="bg-white p-4 rounded-lg border inline-block">
-              <QRCode value={generateUpiPaymentUri()} size={200} />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Scan QR code with any UPI app to pay ₹{total.toFixed(2)}
-            </p>
-          </div>
-        )}
-
-        {selectedPaymentMethod === 'card' && (
-          <div className="text-center p-8 bg-muted rounded-lg">
-            <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Please insert or swipe the card on the terminal
-            </p>
-            <p className="text-lg font-semibold mt-2">₹{total.toFixed(2)}</p>
-          </div>
-        )}
-
-        <div className="flex justify-between items-center pt-4 border-t">
-          <span className="text-lg font-bold">Total: ₹{total.toFixed(2)}</span>
-          <Button 
-            onClick={processPayment}
-            className="bg-green-600 hover:bg-green-700"
-            disabled={selectedPaymentMethod === 'cash' && (!cashReceived || parseFloat(cashReceived) < total)}
-          >
-            Complete Payment
-          </Button>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -378,20 +231,13 @@ const SalesDashboardContent = () => {
                         <Button variant="outline" onClick={clearCart}>
                           Clear Cart
                         </Button>
-                        <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button className="bg-green-600 hover:bg-green-700">
-                              <Receipt className="h-4 w-4 mr-2" />
-                              Checkout
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[500px]">
-                            <DialogHeader>
-                              <DialogTitle>Payment</DialogTitle>
-                            </DialogHeader>
-                            {renderPaymentOptions()}
-                          </DialogContent>
-                        </Dialog>
+                        <Button 
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={handleCheckout}
+                        >
+                          <Receipt className="h-4 w-4 mr-2" />
+                          Checkout
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -401,75 +247,6 @@ const SalesDashboardContent = () => {
           </div>
         </div>
       </main>
-
-      {/* Receipt Dialog */}
-      <Dialog open={isReceiptDialogOpen} onOpenChange={setIsReceiptDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Receipt</DialogTitle>
-          </DialogHeader>
-          
-          {lastSaleData && (
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span>Payment successful!</span>
-                <Button variant="outline" size="sm" onClick={printReceipt}>
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print
-                </Button>
-              </div>
-              
-              <div className="border rounded-md p-4" ref={receiptRef}>
-                <div className="text-center mb-4">
-                  <h3 className="font-bold text-lg">Dostanfarms Store</h3>
-                  <p className="text-sm text-muted-foreground">Receipt #{lastSaleData.receiptNumber}</p>
-                  <p className="text-sm text-muted-foreground">{lastSaleData.timestamp.toLocaleString()}</p>
-                </div>
-                
-                <div className="space-y-2 mb-4">
-                  {lastSaleData.items.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span>{item.product.name} x{item.quantity}</span>
-                      <span>₹{(item.product.pricePerUnit * item.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="border-t pt-2 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>₹{lastSaleData.total.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold">
-                    <span>Total:</span>
-                    <span>₹{lastSaleData.total.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Payment Method:</span>
-                    <span className="capitalize">{lastSaleData.paymentMethod}</span>
-                  </div>
-                  {lastSaleData.paymentMethod === 'cash' && (
-                    <>
-                      <div className="flex justify-between text-sm">
-                        <span>Cash Received:</span>
-                        <span>₹{lastSaleData.cashReceived.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Change:</span>
-                        <span>₹{lastSaleData.change.toFixed(2)}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-                
-                <div className="text-center mt-4 text-xs text-muted-foreground">
-                  Thank you for your business!
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

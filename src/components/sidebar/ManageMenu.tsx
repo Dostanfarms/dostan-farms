@@ -12,15 +12,9 @@ import {
 import { 
   ChevronDown, 
   ChevronUp, 
-  DollarSign, 
-  Package, 
   Receipt, 
-  ShoppingCart, 
   Settings,
-  UserCog,
-  Tag,
-  Ticket,
-  BarChart3
+  UserCog
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
@@ -34,43 +28,19 @@ const ManageMenu = () => {
 
   // Open the manage menu if current location is under any manage item
   useEffect(() => {
-    const managePathsToCheck = ['/products', '/sales', '/transactions', '/coupons', '/employees', '/roles', '/tickets'];
+    const managePathsToCheck = ['/transactions', '/employees', '/roles'];
     if (managePathsToCheck.some(path => location.pathname.startsWith(path))) {
       setManageOpen(true);
     }
   }, [location.pathname]);
 
-  // Items in the "Manage" section
+  // Items in the "Manage" section - removed products, sales dashboard, sales, tickets, coupons
   const manageItems = [
-    {
-      title: 'Products',
-      icon: <Package className="h-5 w-5" />,
-      path: '/products',
-      resource: 'products'
-    },
-    {
-      title: 'Sales Dashboard',
-      icon: <BarChart3 className="h-5 w-5" />,
-      path: '/sales',
-      resource: 'sales'
-    },
     {
       title: 'Transactions',
       icon: <Receipt className="h-5 w-5" />,
       path: '/transactions',
       resource: 'transactions'
-    },
-    {
-      title: 'Coupons',
-      icon: <Tag className="h-5 w-5" />,
-      path: '/coupons',
-      resource: 'coupons'
-    },
-    {
-      title: 'Tickets',
-      icon: <Ticket className="h-5 w-5" />,
-      path: '/tickets',
-      resource: 'tickets'
     },
     {
       title: 'Employees',
@@ -92,10 +62,8 @@ const ManageMenu = () => {
     ? manageItems.filter(item => accessibleResources.includes(item.resource))
     : manageItems;
 
-  const handleLinkClick = (path: string) => {
-    if (path === '/sales') {
-      setOpenMobile(false);
-    }
+  const handleLinkClick = () => {
+    setOpenMobile(false);
   };
 
   if (filteredManageItems.length === 0) {
@@ -123,7 +91,7 @@ const ManageMenu = () => {
                 className={`flex items-center gap-3 py-2 px-3 rounded-md ${
                   location.pathname === item.path ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-muted'
                 }`}
-                onClick={() => handleLinkClick(item.path)}
+                onClick={handleLinkClick}
               >
                 {item.icon}
                 <span className="text-sm">{item.title}</span>

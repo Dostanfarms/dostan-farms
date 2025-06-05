@@ -95,8 +95,21 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [user]);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simple mock authentication
-    const foundUser = mockUsers.find(u => 
+    // First check registered employees from localStorage
+    const registeredEmployees = localStorage.getItem('registeredEmployees');
+    let allUsers = [...mockUsers];
+    
+    if (registeredEmployees) {
+      try {
+        const employees = JSON.parse(registeredEmployees);
+        allUsers = [...allUsers, ...employees];
+      } catch (error) {
+        console.error('Error parsing registered employees:', error);
+      }
+    }
+    
+    // Simple authentication - check both email and name
+    const foundUser = allUsers.find(u => 
       u.email === username || u.name.toLowerCase().replace(' ', '') === username.toLowerCase()
     );
     
