@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,25 +24,25 @@ const Dashboard = () => {
     {
       title: "Total Sales",
       value: "₹25,430",
-      change: "+12.5%",
+      change: "+12.5% from last month",
       icon: <TrendingUp className="h-6 w-6" />
     },
     {
       title: "Total Farmers",
       value: "156",
-      change: "+3.2%",
+      change: "+3.2% from last month",
       icon: <Users className="h-6 w-6" />
     },
     {
       title: "Products",
       value: "89",
-      change: "+8.1%",
+      change: "+8.1% from last month",
       icon: <Package className="h-6 w-6" />
     },
     {
       title: "Revenue",
       value: "₹1,23,450",
-      change: "+15.3%",
+      change: "+15.3% from last month",
       icon: <IndianRupee className="h-6 w-6" />
     }
   ];
@@ -79,7 +80,7 @@ const Dashboard = () => {
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
                   <p className="text-xs text-green-600">
-                    {stat.change} from last month
+                    {stat.change}
                   </p>
                 </CardContent>
               </Card>
