@@ -15,6 +15,8 @@ import EmployeeRegister from './pages/EmployeeRegister';
 import CustomerLogin from './pages/CustomerLogin';
 import CustomerRegister from './pages/CustomerRegister';
 import CustomerHome from './pages/CustomerHome';
+import CustomerProducts from './pages/CustomerProducts';
+import CustomerOrderHistory from './pages/CustomerOrderHistory';
 import CustomerProfile from './pages/CustomerProfile';
 import CartPage from './pages/CartPage';
 import PaymentPage from './pages/PaymentPage';
@@ -61,6 +63,21 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/customer-home" element={<CustomerHome />} />
+            <Route path="/customer-products" element={
+              <ProtectedRoute resource="customer" action="view">
+                <CustomerProducts />
+              </ProtectedRoute>
+            } />
+            <Route path="/customer-order-history" element={
+              <ProtectedRoute resource="customer" action="view">
+                <CustomerOrderHistory />
+              </ProtectedRoute>
+            } />
+            <Route path="/customer-profile" element={
+              <ProtectedRoute resource="customer" action="view">
+                <CustomerProfile />
+              </ProtectedRoute>
+            } />
             <Route path="/customer/profile" element={
               <ProtectedRoute resource="customer" action="view">
                 <CustomerProfile />
@@ -93,6 +110,11 @@ function App() {
             } />
             <Route path="/order-receipt" element={<OrderReceiptPage />} />
             <Route path="/customer/tickets" element={
+              <ProtectedRoute resource="customer" action="view">
+                <CustomerTicketHistory />
+              </ProtectedRoute>
+            } />
+            <Route path="/customer-ticket-history" element={
               <ProtectedRoute resource="customer" action="view">
                 <CustomerTicketHistory />
               </ProtectedRoute>

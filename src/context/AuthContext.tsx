@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface AuthContextProps {
@@ -66,9 +67,9 @@ interface AuthProviderProps {
 
 // Mock users for demo purposes
 const mockUsers = [
-  { id: '1', name: 'Admin User', email: 'admin@dostanfarms.com', role: 'admin' },
-  { id: '2', name: 'Sales Executive', email: 'sales@dostanfarms.com', role: 'sales_executive' },
-  { id: '3', name: 'Manager User', email: 'manager@dostanfarms.com', role: 'manager' }
+  { id: '1', name: 'Admin User', email: 'admin@dostanfarms.com', role: 'admin', password: 'password' },
+  { id: '2', name: 'Sales Executive', email: 'sales@dostanfarms.com', role: 'sales_executive', password: 'password' },
+  { id: '3', name: 'Manager User', email: 'manager@dostanfarms.com', role: 'manager', password: 'password' }
 ];
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
@@ -109,7 +110,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           id: emp.id,
           name: emp.name,
           email: emp.email || `${emp.name.toLowerCase().replace(/\s+/g, '')}@dostanfarms.com`,
-          role: emp.role || 'sales_executive'
+          role: emp.role || 'sales_executive',
+          password: emp.password || 'password'
         }));
         allUsers = [...allUsers, ...formattedEmployees];
       } catch (error) {
@@ -119,18 +121,25 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     
     console.log('All users available for login:', allUsers);
     
-    // Simple authentication - check both email and name
-    const foundUser = allUsers.find(u => 
-      u.email === username || 
-      u.name.toLowerCase().replace(/\s+/g, '') === username.toLowerCase() ||
-      u.name.toLowerCase() === username.toLowerCase()
-    );
+    // Authentication - check both email and name, and validate password
+    const foundUser = allUsers.find(u => {
+      const usernameMatch = u.email === username || 
+                           u.name.toLowerCase().replace(/\s+/g, '') === username.toLowerCase() ||
+                           u.name.toLowerCase() === username.toLowerCase();
+      const passwordMatch = u.password === password;
+      
+      console.log('Checking user:', u.name, 'Username match:', usernameMatch, 'Password match:', passwordMatch);
+      
+      return usernameMatch && passwordMatch;
+    });
     
     console.log('Found user:', foundUser);
     
-    if (foundUser && password === 'password') {
+    if (foundUser) {
       console.log('Login successful for:', foundUser);
-      setUser(foundUser);
+      // Don't store password in the user state
+      const { password: _, ...userWithoutPassword } = foundUser;
+      setUser(userWithoutPassword);
       return true;
     }
     
