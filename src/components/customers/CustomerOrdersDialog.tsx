@@ -17,10 +17,21 @@ interface Customer {
 interface Order {
   id: string;
   customerId: string;
-  items: any[];
+  customerName: string;
+  customerMobile: string;
+  items: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+  subtotal: number;
+  discount: number;
   total: number;
+  couponUsed: string | null;
+  paymentMethod: string;
+  timestamp: string;
   status: string;
-  date: string;
 }
 
 interface CustomerOrdersDialogProps {
@@ -33,48 +44,27 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    // Load orders for this customer from localStorage
-    const savedOrders = localStorage.getItem('orders');
-    if (savedOrders) {
-      try {
-        const allOrders = JSON.parse(savedOrders);
-        const customerOrders = allOrders.filter((order: Order) => order.customerId === customer.id);
-        setOrders(customerOrders);
-      } catch (error) {
-        console.error('Error parsing orders:', error);
+    if (open) {
+      // Load orders from transactions (sales) in localStorage
+      const savedTransactions = localStorage.getItem('transactions');
+      if (savedTransactions) {
+        try {
+          const allTransactions = JSON.parse(savedTransactions);
+          // Filter transactions for this customer
+          const customerOrders = allTransactions.filter((transaction: Order) => 
+            transaction.customerMobile === customer.mobile || 
+            transaction.customerName === customer.name
+          );
+          setOrders(customerOrders);
+        } catch (error) {
+          console.error('Error parsing transactions:', error);
+          setOrders([]);
+        }
+      } else {
         setOrders([]);
       }
-    } else {
-      // Create sample orders for demonstration
-      const sampleOrders = [
-        {
-          id: `ord-${Date.now()}-1`,
-          customerId: customer.id,
-          items: [
-            { name: 'Organic Tomatoes', quantity: 2, price: 150 },
-            { name: 'Fresh Spinach', quantity: 1, price: 80 }
-          ],
-          total: 230,
-          status: 'delivered',
-          date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: `ord-${Date.now()}-2`,
-          customerId: customer.id,
-          items: [
-            { name: 'Organic Carrots', quantity: 3, price: 120 }
-          ],
-          total: 120,
-          status: 'pending',
-          date: new Date().toISOString()
-        }
-      ];
-      setOrders(sampleOrders);
-      
-      // Save sample orders to localStorage for persistence
-      localStorage.setItem('orders', JSON.stringify(sampleOrders));
     }
-  }, [customer.id]);
+  }, [customer.mobile, customer.name, open]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -83,6 +73,7 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
       case 'confirmed':
         return 'bg-blue-100 text-blue-800';
       case 'delivered':
+      case 'completed':
         return 'bg-green-100 text-green-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
@@ -98,9 +89,18 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
     return total.toFixed(2);
   };
 
+  const formatDate = (timestamp: string) => {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString();
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Orders for {customer.name}</DialogTitle>
         </DialogHeader>
@@ -125,6 +125,7 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
                     <TableHead>Order ID</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Items</TableHead>
+                    <TableHead>Payment</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
@@ -132,13 +133,26 @@ const CustomerOrdersDialog = ({ customer, open, onClose }: CustomerOrdersDialogP
                 <TableBody>
                   {orders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">#{order.id}</TableCell>
-                      <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{order.items?.length || 0} item(s)</TableCell>
-                      <TableCell>₹{formatTotal(order.total)}</TableCell>
+                      <TableCell className="font-medium">#{order.id.slice(-8)}</TableCell>
+                      <TableCell>{formatDate(order.timestamp)}</TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(order.status || 'pending')}>
-                          {order.status || 'pending'}
+                        <div className="space-y-1">
+                          {order.items?.map((item, index) => (
+                            <div key={index} className="text-sm">
+                              {item.name} x{item.quantity}
+                            </div>
+                          )) || 'No items'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {order.paymentMethod === 'upi' || order.paymentMethod === 'card' ? 'Online' : 'Cash'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">₹{formatTotal(order.total)}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(order.status || 'completed')}>
+                          {order.status || 'completed'}
                         </Badge>
                       </TableCell>
                     </TableRow>

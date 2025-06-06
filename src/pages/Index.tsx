@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
-import { mockFarmers, mockProducts } from '@/utils/mockData';
+import { mockProducts } from '@/utils/mockData';
 import { Users, Package, Receipt, DollarSign, ShoppingCart, Edit, Check, X } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { 
@@ -17,6 +18,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import { getAllEmployees } from '@/utils/employeeData';
 
 interface Transaction {
   id: string;
@@ -46,8 +48,11 @@ const Index = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [paymentMode, setPaymentMode] = useState<'Cash' | 'Online'>('Cash');
   
-  // Load transactions from localStorage
+  // Load data from localStorage
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [farmers, setFarmers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   
   const formatTimestamp = (timestamp: string) => {
     try {
@@ -63,12 +68,12 @@ const Index = () => {
   };
   
   useEffect(() => {
-    const loadTransactions = () => {
+    const loadData = () => {
+      // Load transactions
       const savedTransactions = localStorage.getItem('transactions');
       if (savedTransactions) {
         try {
           const parsedTransactions = JSON.parse(savedTransactions);
-          // Filter out transactions with invalid timestamps
           const validTransactions = parsedTransactions.filter((transaction: Transaction) => {
             return transaction.timestamp && transaction.timestamp !== '';
           });
@@ -78,23 +83,54 @@ const Index = () => {
           setTransactions([]);
         }
       }
+
+      // Load farmers
+      const savedFarmers = localStorage.getItem('farmers');
+      if (savedFarmers) {
+        try {
+          const parsedFarmers = JSON.parse(savedFarmers);
+          setFarmers(parsedFarmers);
+        } catch (error) {
+          console.error('Error loading farmers:', error);
+          setFarmers([]);
+        }
+      }
+
+      // Load products from localStorage, fallback to mock data
+      const savedProducts = localStorage.getItem('products');
+      if (savedProducts) {
+        try {
+          const parsedProducts = JSON.parse(savedProducts);
+          setProducts(parsedProducts);
+        } catch (error) {
+          console.error('Error loading products:', error);
+          setProducts(mockProducts);
+        }
+      } else {
+        setProducts(mockProducts);
+      }
+
+      // Load employees
+      const allEmployees = getAllEmployees();
+      setEmployees(allEmployees);
     };
 
-    loadTransactions();
+    loadData();
     
     // Listen for storage changes to update in real-time
     const handleStorageChange = () => {
-      loadTransactions();
+      loadData();
     };
     
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   
-  const totalFarmers = mockFarmers.length;
-  const totalProducts = mockProducts.length;
+  const totalFarmers = farmers.length;
+  const totalProducts = products.length;
   const totalTransactions = transactions.length;
   const totalValue = transactions.reduce((sum, t) => sum + t.total, 0);
+  const totalEmployees = employees.length;
   
   // Get recent sales for sales history
   const recentSales = [...transactions]
@@ -164,7 +200,7 @@ const Index = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total Farmers</p>
                     <h3 className="text-2xl font-bold">{totalFarmers}</h3>
-                    <p className="text-xs text-green-600">+3.2% from last month</p>
+                    <p className="text-xs text-green-600">Active farmers</p>
                   </div>
                   <div className="p-2 bg-blue-100 rounded-full">
                     <Users className="h-6 w-6 text-blue-600" />
@@ -179,7 +215,7 @@ const Index = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total Products</p>
                     <h3 className="text-2xl font-bold">{totalProducts}</h3>
-                    <p className="text-xs text-green-600">+8.1% from last month</p>
+                    <p className="text-xs text-green-600">Available products</p>
                   </div>
                   <div className="p-2 bg-green-100 rounded-full">
                     <Package className="h-6 w-6 text-green-600" />
@@ -194,7 +230,7 @@ const Index = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total Transactions</p>
                     <h3 className="text-2xl font-bold">{totalTransactions}</h3>
-                    <p className="text-xs text-green-600">+12.5% from last month</p>
+                    <p className="text-xs text-green-600">Completed sales</p>
                   </div>
                   <div className="p-2 bg-amber-100 rounded-full">
                     <Receipt className="h-6 w-6 text-amber-600" />
@@ -209,7 +245,7 @@ const Index = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total Revenue</p>
                     <h3 className="text-2xl font-bold">₹{totalValue.toFixed(2)}</h3>
-                    <p className="text-xs text-green-600">+15.3% from last month</p>
+                    <p className="text-xs text-green-600">From sales</p>
                   </div>
                   <div className="p-2 bg-purple-100 rounded-full">
                     <DollarSign className="h-6 w-6 text-purple-600" />
@@ -229,22 +265,22 @@ const Index = () => {
                   <div className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">New farmer registered</p>
-                      <p className="text-xs text-muted-foreground">2 minutes ago</p>
+                      <p className="text-sm font-medium">Total Employees: {totalEmployees}</p>
+                      <p className="text-xs text-muted-foreground">Active in system</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Product added to inventory</p>
-                      <p className="text-xs text-muted-foreground">15 minutes ago</p>
+                      <p className="text-sm font-medium">Farmers registered: {totalFarmers}</p>
+                      <p className="text-xs text-muted-foreground">In database</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Sale completed</p>
-                      <p className="text-xs text-muted-foreground">1 hour ago</p>
+                      <p className="text-sm font-medium">Products available: {totalProducts}</p>
+                      <p className="text-xs text-muted-foreground">Ready for sale</p>
                     </div>
                   </div>
                 </div>
@@ -284,10 +320,10 @@ const Index = () => {
                   <Button 
                     variant="outline" 
                     className="h-20 flex-col"
-                    onClick={() => navigate('/transactions')}
+                    onClick={() => navigate('/employees')}
                   >
-                    <DollarSign className="h-6 w-6 mb-2" />
-                    <span>View Transactions</span>
+                    <Users className="h-6 w-6 mb-2" />
+                    <span>Manage Employees</span>
                   </Button>
                 </div>
               </CardContent>

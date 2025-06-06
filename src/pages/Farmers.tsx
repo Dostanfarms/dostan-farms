@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,16 +8,48 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import Sidebar from '@/components/Sidebar';
 import FarmerForm from '@/components/FarmerForm';
-import { mockFarmers } from '@/utils/mockData';
 import { Farmer } from '@/utils/types';
 import { Search, Plus, User, Edit, Eye } from 'lucide-react';
 
 const Farmers = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [farmers, setFarmers] = useState<Farmer[]>(mockFarmers);
+  const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | undefined>(undefined);
+  
+  // Load farmers from localStorage on component mount
+  useEffect(() => {
+    const loadFarmers = () => {
+      const savedFarmers = localStorage.getItem('farmers');
+      if (savedFarmers) {
+        try {
+          const parsedFarmers = JSON.parse(savedFarmers);
+          // Convert date strings back to Date objects
+          const farmersWithDates = parsedFarmers.map((farmer: any) => ({
+            ...farmer,
+            dateJoined: new Date(farmer.dateJoined),
+            products: farmer.products || [],
+            transactions: farmer.transactions || []
+          }));
+          setFarmers(farmersWithDates);
+        } catch (error) {
+          console.error('Error loading farmers:', error);
+          setFarmers([]);
+        }
+      }
+    };
+
+    loadFarmers();
+    
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      loadFarmers();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
   
   // Filter farmers based on search
   const filteredFarmers = farmers.filter(farmer => 
@@ -26,16 +58,23 @@ const Farmers = () => {
   );
   
   const handleAddFarmer = (newFarmer: Farmer) => {
+    let updatedFarmers;
+    
     if (selectedFarmer) {
       // Update existing farmer
-      const updatedFarmers = farmers.map(farmer => 
+      updatedFarmers = farmers.map(farmer => 
         farmer.id === newFarmer.id ? newFarmer : farmer
       );
-      setFarmers(updatedFarmers);
     } else {
       // Add new farmer
-      setFarmers([...farmers, newFarmer]);
+      updatedFarmers = [...farmers, newFarmer];
     }
+    
+    setFarmers(updatedFarmers);
+    
+    // Save to localStorage
+    localStorage.setItem('farmers', JSON.stringify(updatedFarmers));
+    
     setIsDialogOpen(false);
     setSelectedFarmer(undefined);
   };
@@ -132,7 +171,7 @@ const Farmers = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Products:</span>
-                        <span>{farmer.products.length}</span>
+                        <span>{farmer.products?.length || 0}</span>
                       </div>
                       <div className="flex gap-2 mt-2">
                         <Button 
