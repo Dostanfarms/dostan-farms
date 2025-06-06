@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
 import { mockFarmers, mockProducts } from '@/utils/mockData';
 import { Users, Package, Receipt, DollarSign, ShoppingCart, Edit, Check, X } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { 
   Dialog, 
   DialogContent, 
@@ -50,13 +49,30 @@ const Index = () => {
   // Load transactions from localStorage
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      const date = new Date(timestamp);
+      if (isValid(date)) {
+        return format(date, 'MMM dd, yyyy');
+      }
+      return 'Invalid Date';
+    } catch (error) {
+      console.error('Error formatting timestamp:', timestamp, error);
+      return 'Invalid Date';
+    }
+  };
+  
   useEffect(() => {
     const loadTransactions = () => {
       const savedTransactions = localStorage.getItem('transactions');
       if (savedTransactions) {
         try {
           const parsedTransactions = JSON.parse(savedTransactions);
-          setTransactions(parsedTransactions);
+          // Filter out transactions with invalid timestamps
+          const validTransactions = parsedTransactions.filter((transaction: Transaction) => {
+            return transaction.timestamp && transaction.timestamp !== '';
+          });
+          setTransactions(validTransactions);
         } catch (error) {
           console.error('Error loading transactions:', error);
           setTransactions([]);
@@ -82,7 +98,14 @@ const Index = () => {
   
   // Get recent sales for sales history
   const recentSales = [...transactions]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort((a, b) => {
+      const dateA = new Date(a.timestamp);
+      const dateB = new Date(b.timestamp);
+      if (isValid(dateA) && isValid(dateB)) {
+        return dateB.getTime() - dateA.getTime();
+      }
+      return 0;
+    })
     .slice(0, 10);
   
   const handleEditSale = (transaction: Transaction) => {
@@ -291,7 +314,7 @@ const Index = () => {
                   <tbody>
                     {recentSales.map((sale) => (
                       <tr key={sale.id} className="border-b">
-                        <td className="p-2">{format(new Date(sale.timestamp), 'MMM dd, yyyy')}</td>
+                        <td className="p-2">{formatTimestamp(sale.timestamp)}</td>
                         <td className="p-2">{sale.customerName}</td>
                         <td className="p-2 text-right font-medium text-green-600">
                           ₹{sale.total.toFixed(2)}
