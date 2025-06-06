@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/Sidebar';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { ArrowUpRight, ArrowDownLeft, Check, X, ArrowLeft } from 'lucide-react';
 
 interface Transaction {
@@ -35,15 +35,39 @@ const Transactions = () => {
   
   const canEdit = checkPermission('transactions', 'edit');
 
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      const date = new Date(timestamp);
+      if (isValid(date)) {
+        return format(date, 'MMM dd, yyyy HH:mm');
+      }
+      return 'Invalid Date';
+    } catch (error) {
+      console.error('Error formatting timestamp:', timestamp, error);
+      return 'Invalid Date';
+    }
+  };
+
   useEffect(() => {
     const loadTransactions = () => {
       const savedTransactions = localStorage.getItem('transactions');
       if (savedTransactions) {
         try {
           const parsedTransactions = JSON.parse(savedTransactions);
-          // Sort by timestamp descending (newest first)
-          const sortedTransactions = parsedTransactions.sort(
-            (a: Transaction, b: Transaction) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          // Sort by timestamp descending (newest first) and filter out invalid timestamps
+          const validTransactions = parsedTransactions.filter((transaction: Transaction) => {
+            return transaction.timestamp && transaction.timestamp !== '';
+          });
+          
+          const sortedTransactions = validTransactions.sort(
+            (a: Transaction, b: Transaction) => {
+              const dateA = new Date(a.timestamp);
+              const dateB = new Date(b.timestamp);
+              if (isValid(dateA) && isValid(dateB)) {
+                return dateB.getTime() - dateA.getTime();
+              }
+              return 0;
+            }
           );
           setTransactions(sortedTransactions);
         } catch (error) {
@@ -118,7 +142,7 @@ const Transactions = () => {
                     {transactions.map((transaction) => (
                       <tr key={transaction.id} className="border-b">
                         <td className="p-2">{transaction.id}</td>
-                        <td className="p-2">{format(new Date(transaction.timestamp), 'MMM dd, yyyy HH:mm')}</td>
+                        <td className="p-2">{formatTimestamp(transaction.timestamp)}</td>
                         <td className="p-2">
                           <div>
                             <p className="font-medium">{transaction.customerName}</p>
