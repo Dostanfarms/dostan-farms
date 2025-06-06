@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -11,7 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Package, ArrowLeft, User, Home, MapPin, Mail, Phone } from 'lucide-react';
+import { Package, ArrowLeft, User, Home, MapPin, Mail, Phone, Ticket } from 'lucide-react';
+import TicketDialog from '@/components/ticket/TicketDialog';
+import { Ticket as TicketType } from '@/utils/types';
 
 const CustomerProfile = () => {
   const navigate = useNavigate();
@@ -66,6 +67,31 @@ const CustomerProfile = () => {
         description: "Your profile has been updated successfully"
       });
     }, 1000);
+  };
+
+  const handleTicketSubmit = (ticket: Omit<TicketType, 'id'>) => {
+    // Create a new ticket with ID
+    const newTicket: TicketType = {
+      ...ticket,
+      id: `${Date.now()}`,
+      dateCreated: new Date(),
+      lastUpdated: new Date(),
+      status: 'pending'
+    };
+    
+    // Add to existing tickets
+    const savedTickets = localStorage.getItem('tickets');
+    const allTickets = savedTickets ? JSON.parse(savedTickets) : [];
+    const updatedTickets = [...allTickets, newTicket];
+    
+    // Save to localStorage
+    localStorage.setItem('tickets', JSON.stringify(updatedTickets));
+    
+    toast({
+      title: "Ticket Submitted",
+      description: "Your support ticket has been submitted.",
+      variant: "default",
+    });
   };
   
   if (!initialCustomer) {
@@ -231,12 +257,29 @@ const CustomerProfile = () => {
             )}
             
             {!isEditing && (
-              <div className="pt-4">
-                <Link to="/order-history">
+              <div className="pt-4 space-y-3">
+                <Link to="/customer-order-history">
                   <Button variant="outline" className="w-full">
                     View Order History
                   </Button>
                 </Link>
+                
+                <div className="flex gap-2">
+                  <TicketDialog
+                    userType="customer"
+                    userId={customer.id || customer.mobile}
+                    userName={customer.name}
+                    userContact={customer.mobile}
+                    onSubmit={handleTicketSubmit}
+                    buttonText="Raise a Ticket"
+                  />
+                  <Link to="/customer-ticket-history" className="flex-1">
+                    <Button variant="outline" className="w-full">
+                      <Ticket className="h-4 w-4 mr-2" />
+                      Ticket History
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
           </CardContent>
